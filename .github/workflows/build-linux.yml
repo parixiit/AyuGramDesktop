@@ -1,0 +1,66 @@
+name: Build Linux Binary
+
+on:
+  push:
+    branches:
+      - feature/top-bar-avatar
+      - main
+      - dev
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build AyuGram Desktop
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Free up disk space
+        uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+
+      - name: Pull Telegram Desktop Build Container
+        run: |
+          docker pull ghcr.io/telegramdesktop/tdesktop/centos_env:latest
+
+      - name: Build AyuGram Desktop
+        run: |
+          docker run --rm \
+            -u $(id -u) \
+            -v "$PWD:/usr/src/tdesktop" \
+            -e CONFIG=Release \
+            ghcr.io/telegramdesktop/tdesktop/centos_env:latest \
+            /usr/src/tdesktop/Telegram/build/docker/centos_env/build.sh \
+            -D TDESKTOP_API_ID=2040 \
+            -D TDESKTOP_API_HASH=b18441a1ff607e10a989891a5462e627 \
+            -D TDESKTOP_API_TEST=ON \
+            -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON \
+            -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON
+
+      - name: Package Binary
+        run: |
+          mkdir -p package
+          if [ -f out/Release/Telegram ]; then
+            cp out/Release/Telegram package/AyuGram
+          elif [ -f out/Telegram ]; then
+            cp out/Telegram package/AyuGram
+          fi
+          strip package/AyuGram || true
+          tar -czvf ayugram-linux-x86_64.tar.gz -C package AyuGram
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ayugram-linux-x86_64
+          path: ayugram-linux-x86_64.tar.gz
+          retention-days: 14

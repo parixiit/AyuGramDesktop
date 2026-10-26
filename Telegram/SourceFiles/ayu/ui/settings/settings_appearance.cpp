@@ -210,6 +210,12 @@ void BuildAppearance(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 		.getter = &AyuSettings::hidePremiumStatuses,
 		.setter = &AyuSettings::setHidePremiumStatuses,
 	});
+	ayu.addSettingToggle({
+		.id = u"ayu/showTopBarAvatar"_q,
+		.title = tr::ayu_ShowTopBarAvatar(),
+		.getter = &AyuSettings::showTopBarAvatar,
+		.setter = &AyuSettings::setShowTopBarAvatar,
+	});
 
 	const auto controller = builder.controller();
 	builder.addButton({
