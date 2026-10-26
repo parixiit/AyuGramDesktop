@@ -29,6 +29,13 @@ jobs:
           large-packages: true
           swap-storage: true
 
+      - name: Setup ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/.tdesktop-cache
+          key: ${{ runner.os }}-ccache-${{ github.sha }}
+          restore-keys: ${{ runner.os }}-ccache-
+
       - name: Prepare Build Container
         run: |
           docker pull ghcr.io/telegramdesktop/tdesktop/centos_env:latest
@@ -51,10 +58,13 @@ jobs:
 
       - name: Build AyuGram Desktop
         run: |
+          mkdir -p ${{ runner.temp }}/.tdesktop-cache
           docker run --rm \
             -u $(id -u) \
             -v "$PWD:/usr/src/tdesktop" \
+            -v "${{ runner.temp }}/.tdesktop-cache:/var/cache/ccache" \
             -e CONFIG=Release \
+            -e CCACHE_DIR=/var/cache/ccache \
             tdesktop:centos_env \
             /usr/src/tdesktop/Telegram/build/docker/centos_env/build.sh \
             -D TDESKTOP_API_ID=2040 \
@@ -66,11 +76,12 @@ jobs:
       - name: Package Binary
         run: |
           mkdir -p package
-          if [ -f out/Release/Telegram ]; then
-            cp out/Release/Telegram package/AyuGram
-          elif [ -f out/Telegram ]; then
-            cp out/Telegram package/AyuGram
+          BINARY=$(find out -type f \( -name "AyuGram" -o -name "Telegram" \) -executable | head -n 1)
+          if [ -z "$BINARY" ]; then
+            BINARY=$(find out -type f \( -name "AyuGram" -o -name "Telegram" \) | head -n 1)
           fi
+          echo "Found binary at: $BINARY"
+          cp "$BINARY" package/AyuGram
           strip package/AyuGram || true
           tar -czvf ayugram-linux-x86_64.tar.gz -C package AyuGram
 
