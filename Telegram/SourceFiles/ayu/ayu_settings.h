@@ -353,6 +353,7 @@ public:
 	[[nodiscard]] int avatarCorners() const { return _avatarCorners.current(); }
 	[[nodiscard]] bool singleCornerRadius() const { return _singleCornerRadius.current(); }
 	[[nodiscard]] bool showTopBarAvatar() const { return _showTopBarAvatar.current(); }
+	[[nodiscard]] bool roundedInnerCorners() const { return _roundedInnerCorners.current(); }
 	[[nodiscard]] bool streamerMode() const { return _streamerMode.current(); }
 
 	void setSaveDeletedMessages(bool val);
@@ -441,6 +442,7 @@ public:
 	void setAvatarCorners(int val);
 	void setSingleCornerRadius(bool val);
 	void setShowTopBarAvatar(bool val);
+	void setRoundedInnerCorners(bool val);
 	void setStreamerMode(bool val);
 
 	[[nodiscard]] rpl::producer<bool> useGlobalGhostModeValue() const { return _useGlobalGhostMode.value(); }
@@ -617,6 +619,8 @@ public:
 	[[nodiscard]] rpl::producer<bool> singleCornerRadiusChanges() const { return _singleCornerRadius.changes(); }
 	[[nodiscard]] rpl::producer<bool> showTopBarAvatarValue() const { return _showTopBarAvatar.value(); }
 	[[nodiscard]] rpl::producer<bool> showTopBarAvatarChanges() const { return _showTopBarAvatar.changes(); }
+	[[nodiscard]] rpl::producer<bool> roundedInnerCornersValue() const { return _roundedInnerCorners.value(); }
+	[[nodiscard]] rpl::producer<bool> roundedInnerCornersChanges() const { return _roundedInnerCorners.changes(); }
 	[[nodiscard]] rpl::producer<bool> streamerModeValue() const { return _streamerMode.value(); }
 	[[nodiscard]] rpl::producer<bool> streamerModeChanges() const { return _streamerMode.changes(); }
 
@@ -715,6 +719,7 @@ private:
 	rpl::variable<int> _avatarCorners = 23;
 	rpl::variable<bool> _singleCornerRadius = false;
 	rpl::variable<bool> _showTopBarAvatar = true;
+	rpl::variable<bool> _roundedInnerCorners = true;
 	rpl::variable<bool> _streamerMode = false;
 
 	rpl::variable<bool> _useGlobalGhostMode = true;

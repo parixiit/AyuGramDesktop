@@ -216,6 +216,12 @@ void BuildAppearance(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 		.getter = &AyuSettings::showTopBarAvatar,
 		.setter = &AyuSettings::setShowTopBarAvatar,
 	});
+	ayu.addSettingToggle({
+		.id = u"ayu/roundedInnerCorners"_q,
+		.title = tr::ayu_RoundedInnerCorners(),
+		.getter = &AyuSettings::roundedInnerCorners,
+		.setter = &AyuSettings::setRoundedInnerCorners,
+	});
 
 	const auto controller = builder.controller();
 	builder.addButton({
