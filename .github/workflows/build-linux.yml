@@ -29,9 +29,25 @@ jobs:
           large-packages: true
           swap-storage: true
 
-      - name: Pull Telegram Desktop Build Container
+      - name: Prepare Build Container
         run: |
           docker pull ghcr.io/telegramdesktop/tdesktop/centos_env:latest
+          docker build -t tdesktop:centos_env - << 'DOCKEREOF'
+          FROM ghcr.io/telegramdesktop/tdesktop/centos_env:latest
+          USER root
+          RUN bash -c 'set -e && \
+            curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal && \
+            source $HOME/.cargo/env && \
+            git clone --depth 1 https://github.com/dkaraush/tlottie.git /usr/src/tlottie && \
+            cd /usr/src/tlottie && \
+            git clone --depth 1 https://github.com/desktop-app/patches.git /usr/src/patches && \
+            (git apply /usr/src/patches/tlottie.patch || true) && \
+            cargo rustc --lib --release --features c-api --crate-type staticlib --target x86_64-unknown-linux-gnu && \
+            mkdir -p /usr/local/lib /usr/local/include/tlottie && \
+            cp target/x86_64-unknown-linux-gnu/release/libtlottie.a /usr/local/lib/libtlottie.a && \
+            cp include/tlottie.h /usr/local/include/tlottie/tlottie.h && \
+            rm -rf /usr/src/tlottie /usr/src/patches'
+          DOCKEREOF
 
       - name: Build AyuGram Desktop
         run: |
@@ -39,7 +55,7 @@ jobs:
             -u $(id -u) \
             -v "$PWD:/usr/src/tdesktop" \
             -e CONFIG=Release \
-            ghcr.io/telegramdesktop/tdesktop/centos_env:latest \
+            tdesktop:centos_env \
             /usr/src/tdesktop/Telegram/build/docker/centos_env/build.sh \
             -D TDESKTOP_API_ID=2040 \
             -D TDESKTOP_API_HASH=b18441a1ff607e10a989891a5462e627 \
