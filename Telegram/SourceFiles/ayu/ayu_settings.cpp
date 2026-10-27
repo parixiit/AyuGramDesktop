@@ -1076,6 +1076,18 @@ void AyuSettings::setRoundedInnerCorners(bool val) {
 	save();
 }
 
+void AyuSettings::setBypassContentProtection(bool val) {
+	if (_bypassContentProtection.current() == val) return;
+	_bypassContentProtection = val;
+	save();
+}
+
+void AyuSettings::setPermanentViewOnceMedia(bool val) {
+	if (_permanentViewOnceMedia.current() == val) return;
+	_permanentViewOnceMedia = val;
+	save();
+}
+
 void AyuSettings::setStreamerMode(bool val) {
 	if (_streamerMode.current() == val) return;
 	_streamerMode = val;
@@ -1180,6 +1192,8 @@ void to_json(nlohmann::json &j, const AyuSettings &s) {
 		{"singleCornerRadius", s._singleCornerRadius.current()},
 		{"showTopBarAvatar", s._showTopBarAvatar.current()},
 		{"roundedInnerCorners", s._roundedInnerCorners.current()},
+		{"bypassContentProtection", s._bypassContentProtection.current()},
+		{"permanentViewOnceMedia", s._permanentViewOnceMedia.current()},
 		{"streamerMode", s._streamerMode.current()},
 		{"messageShotSettings", s._messageShotSettings}
 	};
@@ -1286,6 +1300,8 @@ void from_json(const nlohmann::json &j, AyuSettings &s) {
 	s._singleCornerRadius = j.value("singleCornerRadius", defaults._singleCornerRadius.current());
 	s._showTopBarAvatar = j.value("showTopBarAvatar", defaults._showTopBarAvatar.current());
 	s._roundedInnerCorners = j.value("roundedInnerCorners", defaults._roundedInnerCorners.current());
+	s._bypassContentProtection = j.value("bypassContentProtection", defaults._bypassContentProtection.current());
+	s._permanentViewOnceMedia = j.value("permanentViewOnceMedia", defaults._permanentViewOnceMedia.current());
 	s._streamerMode = j.value("streamerMode", defaults._streamerMode.current());
 
 	if (j.contains("messageShotSettings") && j["messageShotSettings"].is_object()) {
