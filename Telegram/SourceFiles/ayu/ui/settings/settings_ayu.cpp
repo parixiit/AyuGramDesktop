@@ -653,14 +653,12 @@ void BuildSpyEssentials(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	ayu.addSettingToggle({
 		.id = u"ayu/bypassContentProtection"_q,
 		.title = tr::ayu_BypassContentProtection(),
-		.description = tr::ayu_BypassContentProtectionDescription(),
 		.getter = &AyuSettings::bypassContentProtection,
 		.setter = &AyuSettings::setBypassContentProtection,
 	});
 	ayu.addSettingToggle({
 		.id = u"ayu/permanentViewOnceMedia"_q,
 		.title = tr::ayu_PermanentViewOnceMedia(),
-		.description = tr::ayu_PermanentViewOnceMediaDescription(),
 		.getter = &AyuSettings::permanentViewOnceMedia,
 		.setter = &AyuSettings::setPermanentViewOnceMedia,
 	});
