@@ -741,6 +741,7 @@ private:
 	std::map<uint64, std::unique_ptr<GhostModeAccountSettings>> _ghostAccounts;
 
 	MessageShotSettings _messageShotSettings;
+
 };
 
 void to_json(nlohmann::json &j, const AyuSettings &s);
