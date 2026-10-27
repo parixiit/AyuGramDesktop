@@ -313,7 +313,9 @@ object_ptr<Window::SectionWidget> Memento::createWidget(
 object_ptr<Ui::LayerWidget> Memento::createLayer(
 		not_null<Window::SessionController*> controller,
 		const QRect &geometry) {
-	if (AyuSettings::getInstance().modernLayout()) {
+	if (AyuSettings::getInstance().modernLayout()
+		&& !_stack.empty()
+		&& !_stack.back()->settingsSelf()) {
 		return nullptr;
 	}
 	if (geometry.width() >= LayerWidget::MinimalSupportedWidth()) {
@@ -355,7 +357,11 @@ object_ptr<Ui::LayerWidget> MoveMemento::createLayer(
 		not_null<Window::SessionController*> controller,
 		const QRect &geometry) {
 	if (AyuSettings::getInstance().modernLayout()
-		|| geometry.width() < LayerWidget::MinimalSupportedWidth()) {
+		&& _content
+		&& _content->controller()->section().type() != Section::Type::Settings) {
+		return nullptr;
+	}
+	if (geometry.width() < LayerWidget::MinimalSupportedWidth()) {
 		return nullptr;
 	}
 	return object_ptr<LayerWidget>(controller, this);

@@ -127,7 +127,11 @@ std::shared_ptr<Window::SectionMemento> SectionWidget::createMemento() {
 object_ptr<Ui::LayerWidget> SectionWidget::moveContentToLayer(
 		QRect bodyGeometry) {
 	if (AyuSettings::getInstance().modernLayout()
-		|| _content->controller()->wrap() != Wrap::Narrow
+		&& _content
+		&& _content->controller()->section().type() != Section::Type::Settings) {
+		return nullptr;
+	}
+	if (_content->controller()->wrap() != Wrap::Narrow
 		|| width() < LayerWidget::MinimalSupportedWidth()) {
 		return nullptr;
 	}

@@ -2018,14 +2018,12 @@ void MainWidget::showNewSection(
 	const auto layerRect = parentWidget()->rect();
 	if (newThirdSection) {
 		saveInStack = false;
-	} else if (!params.forbidLayer && !AyuSettings::getInstance().modernLayout()) {
-		if (auto layer = memento->createLayer(_controller, layerRect)) {
-			if (params.activation != anim::activation::background) {
-				_controller->hideLayer(anim::type::instant);
-			}
-			_controller->showSpecialLayer(std::move(layer));
-			return;
+	} else if (auto layer = memento->createLayer(_controller, layerRect)) {
+		if (params.activation != anim::activation::background) {
+			_controller->hideLayer(anim::type::instant);
 		}
+		_controller->showSpecialLayer(std::move(layer));
+		return;
 	}
 
 	if (params.activation != anim::activation::background) {
