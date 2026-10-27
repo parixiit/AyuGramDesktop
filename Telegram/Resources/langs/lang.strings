@@ -9197,3 +9197,5 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_BypassContentProtectionDescription" = "Allows copying text, forwarding, and saving media from protected channels and groups.";
 "ayu_PermanentViewOnceMedia" = "Permanent View-Once Media";
 "ayu_PermanentViewOnceMediaDescription" = "Prevents self-destructing and view-once media from auto-deleting, keeping them saved in chat.";
+"ayu_ModernLayout" = "Modern Layout";
+"ayu_ModernLayoutDescription" = "Display user info, groups, and settings across the main chat area.";

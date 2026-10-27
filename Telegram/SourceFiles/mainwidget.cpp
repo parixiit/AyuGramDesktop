@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "mainwidget.h"
 
+#include "ayu/ayu_settings.h"
+
 #include "api/api_updates.h"
 #include "api/api_views.h"
 #include "data/components/scheduled_messages.h"
@@ -2017,12 +2019,14 @@ void MainWidget::showNewSection(
 	const auto layerRect = parentWidget()->rect();
 	if (newThirdSection) {
 		saveInStack = false;
-	} else if (auto layer = memento->createLayer(_controller, layerRect)) {
-		if (params.activation != anim::activation::background) {
-			_controller->hideLayer(anim::type::instant);
+	} else if (!params.forbidLayer && !AyuSettings::getInstance().modernLayout()) {
+		if (auto layer = memento->createLayer(_controller, layerRect)) {
+			if (params.activation != anim::activation::background) {
+				_controller->hideLayer(anim::type::instant);
+			}
+			_controller->showSpecialLayer(std::move(layer));
+			return;
 		}
-		_controller->showSpecialLayer(std::move(layer));
-		return;
 	}
 
 	if (params.activation != anim::activation::background) {

@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "info/info_memento.h"
 
+#include "ayu/ayu_settings.h"
+
 #include "info/global_media/info_global_media_widget.h"
 #include "info/profile/info_profile_widget.h"
 #include "info/profile/tabs/info_profile_tabs_host.h"
@@ -311,6 +313,9 @@ object_ptr<Window::SectionWidget> Memento::createWidget(
 object_ptr<Ui::LayerWidget> Memento::createLayer(
 		not_null<Window::SessionController*> controller,
 		const QRect &geometry) {
+	if (AyuSettings::getInstance().modernLayout()) {
+		return nullptr;
+	}
 	if (geometry.width() >= LayerWidget::MinimalSupportedWidth()) {
 		return object_ptr<LayerWidget>(controller, this);
 	}
@@ -349,7 +354,8 @@ object_ptr<Window::SectionWidget> MoveMemento::createWidget(
 object_ptr<Ui::LayerWidget> MoveMemento::createLayer(
 		not_null<Window::SessionController*> controller,
 		const QRect &geometry) {
-	if (geometry.width() < LayerWidget::MinimalSupportedWidth()) {
+	if (AyuSettings::getInstance().modernLayout()
+		|| geometry.width() < LayerWidget::MinimalSupportedWidth()) {
 		return nullptr;
 	}
 	return object_ptr<LayerWidget>(controller, this);

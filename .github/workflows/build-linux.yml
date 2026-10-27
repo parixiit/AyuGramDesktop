@@ -5,6 +5,7 @@ on:
     branches:
       - feature/anti-restrictions
       - feature/top-bar-avatar
+      - feature/modern-layout
       - main
       - dev
   workflow_dispatch:

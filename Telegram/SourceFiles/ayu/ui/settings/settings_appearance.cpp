@@ -217,6 +217,15 @@ void BuildAppearance(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 		.setter = &AyuSettings::setShowTopBarAvatar,
 	});
 	ayu.addSettingToggle({
+		.id = u"ayu/modernLayout"_q,
+		.title = tr::ayu_ModernLayout(),
+		.getter = &AyuSettings::modernLayout,
+		.setter = &AyuSettings::setModernLayout,
+	});
+	builder.addSkip();
+	builder.addDividerText(tr::ayu_ModernLayoutDescription());
+	builder.addSkip();
+	ayu.addSettingToggle({
 		.id = u"ayu/roundedInnerCorners"_q,
 		.title = tr::ayu_RoundedInnerCorners(),
 		.getter = &AyuSettings::roundedInnerCorners,

@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "info/info_section_widget.h"
 
+#include "ayu/ayu_settings.h"
+
 #include "window/window_adaptive.h"
 #include "window/window_connecting_widget.h"
 #include "window/window_session_controller.h"
@@ -124,7 +126,8 @@ std::shared_ptr<Window::SectionMemento> SectionWidget::createMemento() {
 
 object_ptr<Ui::LayerWidget> SectionWidget::moveContentToLayer(
 		QRect bodyGeometry) {
-	if (_content->controller()->wrap() != Wrap::Narrow
+	if (AyuSettings::getInstance().modernLayout()
+		|| _content->controller()->wrap() != Wrap::Narrow
 		|| width() < LayerWidget::MinimalSupportedWidth()) {
 		return nullptr;
 	}

@@ -356,6 +356,7 @@ public:
 	[[nodiscard]] bool roundedInnerCorners() const { return _roundedInnerCorners.current(); }
 	[[nodiscard]] bool bypassContentProtection() const { return _bypassContentProtection.current(); }
 	[[nodiscard]] bool permanentViewOnceMedia() const { return _permanentViewOnceMedia.current(); }
+	[[nodiscard]] bool modernLayout() const { return _modernLayout.current(); }
 	[[nodiscard]] bool streamerMode() const { return _streamerMode.current(); }
 
 	void setSaveDeletedMessages(bool val);
@@ -447,6 +448,7 @@ public:
 	void setRoundedInnerCorners(bool val);
 	void setBypassContentProtection(bool val);
 	void setPermanentViewOnceMedia(bool val);
+	void setModernLayout(bool val);
 	void setStreamerMode(bool val);
 
 	[[nodiscard]] rpl::producer<bool> useGlobalGhostModeValue() const { return _useGlobalGhostMode.value(); }
@@ -629,6 +631,8 @@ public:
 	[[nodiscard]] rpl::producer<bool> bypassContentProtectionChanges() const { return _bypassContentProtection.changes(); }
 	[[nodiscard]] rpl::producer<bool> permanentViewOnceMediaValue() const { return _permanentViewOnceMedia.value(); }
 	[[nodiscard]] rpl::producer<bool> permanentViewOnceMediaChanges() const { return _permanentViewOnceMedia.changes(); }
+	[[nodiscard]] rpl::producer<bool> modernLayoutValue() const { return _modernLayout.value(); }
+	[[nodiscard]] rpl::producer<bool> modernLayoutChanges() const { return _modernLayout.changes(); }
 	[[nodiscard]] rpl::producer<bool> streamerModeValue() const { return _streamerMode.value(); }
 	[[nodiscard]] rpl::producer<bool> streamerModeChanges() const { return _streamerMode.changes(); }
 
@@ -730,6 +734,7 @@ private:
 	rpl::variable<bool> _roundedInnerCorners = true;
 	rpl::variable<bool> _bypassContentProtection = true;
 	rpl::variable<bool> _permanentViewOnceMedia = true;
+	rpl::variable<bool> _modernLayout = true;
 	rpl::variable<bool> _streamerMode = false;
 
 	rpl::variable<bool> _useGlobalGhostMode = true;
