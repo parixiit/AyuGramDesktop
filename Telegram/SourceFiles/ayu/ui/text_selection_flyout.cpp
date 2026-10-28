@@ -9,6 +9,7 @@
 #include "ayu/ui/text_selection_flyout.h"
 
 #include "ayu/ayu_settings.h"
+#include "lang/lang_keys.h"
 #include "ui/painter.h"
 #include "ui/widgets/fields/input_field.h"
 #include "styles/style_basic.h"
@@ -17,6 +18,7 @@
 
 #include <QtGui/QKeyEvent>
 #include <QtGui/QTextCursor>
+#include <QtWidgets/QApplication>
 #include <QtWidgets/QTextEdit>
 
 namespace Ayu {
@@ -49,7 +51,7 @@ TextSelectionFlyout::TextSelectionFlyout(
 		&QTextEdit::selectionChanged,
 		[=] { updateState(); });
 
-	_field->scrollTop(
+	_field->scrollTop().changes(
 	) | rpl::on_next([=] {
 		if (!isHidden()) {
 			updatePosition();
@@ -70,18 +72,18 @@ void TextSelectionFlyout::setupButtons() {
 	_buttons.clear();
 
 	const auto types = {
-		std::pair{ ButtonType::Bold, u"B"_q },
-		std::pair{ ButtonType::Italic, u"I"_q },
-		std::pair{ ButtonType::Underline, u"U"_q },
-		std::pair{ ButtonType::Strikethrough, u"S"_q },
-		std::pair{ ButtonType::Quote, QString::fromUtf8("“") },
-		std::pair{ ButtonType::Monospace, QString::fromUtf8("<>") },
-		std::pair{ ButtonType::Spoiler, QString() },
-		std::pair{ ButtonType::Link, QString() },
+		std::tuple{ ButtonType::Bold, u"B"_q, tr::lng_menu_formatting_bold(tr::now) },
+		std::tuple{ ButtonType::Italic, u"I"_q, tr::lng_menu_formatting_italic(tr::now) },
+		std::tuple{ ButtonType::Underline, u"U"_q, tr::lng_menu_formatting_underline(tr::now) },
+		std::tuple{ ButtonType::Strikethrough, u"S"_q, tr::lng_menu_formatting_strike_out(tr::now) },
+		std::tuple{ ButtonType::Quote, QString::fromUtf8("“"), tr::lng_menu_formatting_blockquote(tr::now) },
+		std::tuple{ ButtonType::Monospace, QString::fromUtf8("<>"), tr::lng_menu_formatting_monospace(tr::now) },
+		std::tuple{ ButtonType::Spoiler, QString(), tr::lng_menu_formatting_spoiler(tr::now) },
+		std::tuple{ ButtonType::Link, QString(), tr::lng_menu_formatting_link_create(tr::now) },
 	};
 
 	auto currentX = kFlyoutPadding;
-	for (const auto &[type, text] : types) {
+	for (const auto &[type, text, tip] : types) {
 		if (type == ButtonType::Link) {
 			currentX += 6; // gap for separator
 		}
@@ -90,7 +92,7 @@ void TextSelectionFlyout::setupButtons() {
 			(kFlyoutHeight - kBtnHeight) / 2,
 			kBtnWidth,
 			kBtnHeight);
-		_buttons.push_back({ type, r, text, false });
+		_buttons.push_back({ type, r, text, tip, false });
 		currentX += kBtnWidth + 2;
 	}
 
@@ -110,6 +112,11 @@ void TextSelectionFlyout::mouseMoveEvent(QMouseEvent *e) {
 	const auto idx = buttonIndexAt(e->pos());
 	if (_hoveredIndex != idx) {
 		_hoveredIndex = idx;
+		if (idx >= 0 && idx < int(_buttons.size())) {
+			setToolTip(_buttons[idx].tooltip);
+		} else {
+			setToolTip(QString());
+		}
 		update();
 	}
 }
@@ -117,6 +124,7 @@ void TextSelectionFlyout::mouseMoveEvent(QMouseEvent *e) {
 void TextSelectionFlyout::leaveEvent(QEvent *e) {
 	if (_hoveredIndex != -1) {
 		_hoveredIndex = -1;
+		setToolTip(QString());
 		update();
 	}
 }
@@ -133,8 +141,8 @@ void TextSelectionFlyout::mousePressEvent(QMouseEvent *e) {
 
 void TextSelectionFlyout::executeButton(ButtonType type) {
 	const auto raw = _field->rawTextEdit().get();
-	Qt::Key key = Qt::Key_unknown;
-	Qt::KeyboardModifiers modifiers = Qt::NoModifier;
+	auto key = std::optional<Qt::Key>();
+	auto modifiers = Qt::KeyboardModifiers(Qt::NoModifier);
 
 	switch (type) {
 	case ButtonType::Bold:
@@ -171,12 +179,16 @@ void TextSelectionFlyout::executeButton(ButtonType type) {
 		break;
 	}
 
-	if (key != Qt::Key_unknown) {
-		QKeyEvent press(QEvent::KeyPress, key, modifiers);
-		QCoreApplication::sendEvent(raw, &press);
-		QKeyEvent release(QEvent::KeyRelease, key, modifiers);
-		QCoreApplication::sendEvent(raw, &release);
-		updateState();
+	if (key) {
+		QApplication::postEvent(
+			raw,
+			new QKeyEvent(QEvent::KeyPress, *key, modifiers));
+		QApplication::postEvent(
+			raw,
+			new QKeyEvent(QEvent::KeyRelease, *key, modifiers));
+		crl::on_main(this, [=] {
+			updateState();
+		});
 	}
 }
 
@@ -195,7 +207,9 @@ void TextSelectionFlyout::updateState() {
 		return;
 	}
 
-	const auto textWithTags = _field->getTextWithTagsSelected();
+	const auto textWithTags = _field->getTextWithTagsPart(
+		cursor.selectionStart(),
+		cursor.selectionEnd());
 	bool isBold = false;
 	bool isItalic = false;
 	bool isUnderline = false;

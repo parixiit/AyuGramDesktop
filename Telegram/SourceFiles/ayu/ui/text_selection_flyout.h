@@ -52,6 +52,7 @@ private:
 		ButtonType type;
 		QRect rect;
 		QString text;
+		QString tooltip;
 		bool active = false;
 	};
 
