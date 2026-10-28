@@ -124,6 +124,10 @@ class SuggestOptionsBar;
 enum class SuggestMode;
 } // namespace HistoryView
 
+namespace Ayu {
+class TextSelectionFlyout;
+} // namespace Ayu
+
 namespace HistoryView::Controls {
 class RecordLock;
 class VoiceRecordBar;
@@ -899,6 +903,7 @@ private:
 
 	std::unique_ptr<ChatHelpers::FieldAutocomplete> _autocomplete;
 	std::unique_ptr<Ui::Emoji::SuggestionsController> _emojiSuggestions;
+	std::unique_ptr<Ayu::TextSelectionFlyout> _selectionFlyout;
 	object_ptr<Support::Autocomplete> _supportAutocomplete;
 
 	UserData *_inlineBot = nullptr;

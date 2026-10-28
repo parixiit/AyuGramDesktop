@@ -220,11 +220,11 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 // AyuGram includes
 #include "ayu/ayu_settings.h"
 #include "ayu/features/filters/filters_cache_controller.h"
-#include "ayu/utils/telegram_helpers.h"
-#include "ayu/features/message_shot/message_shot.h"
 #include "ayu/features/forward/ayu_forward.h"
+#include "ayu/features/message_shot/message_shot.h"
+#include "ayu/ui/text_selection_flyout.h"
+#include "ayu/utils/telegram_helpers.h"
 #include "boxes/abstract_box.h"
-
 
 namespace {
 
@@ -562,6 +562,10 @@ HistoryWidget::HistoryWidget(
 			}
 		});
 	});
+
+	_selectionFlyout = std::make_unique<Ayu::TextSelectionFlyout>(
+		this,
+		_field.data());
 
 	const auto rawTextEdit = _field->rawTextEdit().get();
 	rpl::merge(
@@ -2060,6 +2064,9 @@ int HistoryWidget::itemTopForHighlight(
 void HistoryWidget::initFieldAutocomplete() {
 	_emojiSuggestions = nullptr;
 	_autocomplete = nullptr;
+	if (_selectionFlyout) {
+		_selectionFlyout->hideFast();
+	}
 	if (!_peer) {
 		return;
 	}
@@ -2320,6 +2327,9 @@ void HistoryWidget::orderWidgets() {
 	}
 	_attachDragAreas.document->raise();
 	_attachDragAreas.photo->raise();
+	if (_selectionFlyout && !_selectionFlyout->isHidden()) {
+		_selectionFlyout->raise();
+	}
 }
 
 void HistoryWidget::toggleChooseChatTheme(

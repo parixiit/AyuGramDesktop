@@ -104,11 +104,12 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QtCore/QMimeData>
 
 // AyuGram includes
-#include "ayu/features/forward/ayu_forward.h"
 #include "ayu/ayu_settings.h"
+#include "ayu/features/forward/ayu_forward.h"
 #include "ayu/ui/settings/settings_nav_widget.h"
+#include "info/info_controller.h"
+#include "info/info_section_widget.h"
 #include "info/info_wrap_widget.h"
-
 
 namespace {
 
@@ -1693,6 +1694,7 @@ void MainWidget::showHistory(
 
 	updateMainSectionShown();
 	updateControlsGeometry();
+	updateSettingsNavVisibility();
 
 	if (noPeer) {
 		_controller->setActiveChatEntry(Dialogs::Key());
@@ -2204,7 +2206,8 @@ void MainWidget::updateSettingsNavVisibility() {
 		}
 		return;
 	}
-	const auto wrap = dynamic_cast<Info::WrapWidget*>(_mainSection.data());
+	const auto infoSection = dynamic_cast<Info::SectionWidget*>(_mainSection.data());
+	const auto wrap = infoSection ? infoSection->wrapWidget().get() : nullptr;
 	const auto isSettings = wrap
 		&& (wrap->controller()->section().type() == Info::Section::Type::Settings);
 	if (isSettings) {
@@ -2215,11 +2218,12 @@ void MainWidget::updateSettingsNavVisibility() {
 		if (_settingsNav->isHidden()) {
 			_settingsNav->show();
 		}
+		_settingsNav->raise();
 		_settingsNav->setGeometryToLeft(0, 0, _dialogsWidth, height());
 		_settingsNav->setActiveType(wrap->controller()->section().settingsType());
 	} else if (_settingsNav && !_settingsNav->isHidden()) {
 		_settingsNav->hide();
-		if (_dialogs) {
+		if (_dialogs && !isOneColumn()) {
 			_dialogs->show();
 		}
 	}
@@ -3205,6 +3209,11 @@ void MainWidget::handleAdaptiveLayoutUpdate() {
 
 void MainWidget::handleHistoryBack() {
 	if (_mainSection && _mainSection->showBackInternal()) {
+		updateSettingsNavVisibility();
+		return;
+	}
+	if (_settingsNav && !_settingsNav->isHidden()) {
+		closeSettings();
 		return;
 	}
 	const auto openedFolder = _controller->openedFolder().current();

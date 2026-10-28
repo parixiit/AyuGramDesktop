@@ -50,8 +50,19 @@ TextSelectionFlyout::TextSelectionFlyout(
 		raw,
 		&QTextEdit::selectionChanged,
 		[=] { updateState(); });
+	QObject::connect(
+		raw,
+		&QTextEdit::cursorPositionChanged,
+		[=] { updateState(); });
 
 	_field->scrollTop().changes(
+	) | rpl::on_next([=] {
+		if (!isHidden()) {
+			updatePosition();
+		}
+	}, lifetime());
+
+	_field->geometryValue(
 	) | rpl::on_next([=] {
 		if (!isHidden()) {
 			updatePosition();
@@ -61,7 +72,11 @@ TextSelectionFlyout::TextSelectionFlyout(
 	_field->focusedChanges(
 	) | rpl::on_next([=](bool focused) {
 		if (!focused) {
-			hideFast();
+			crl::on_main(this, [=] {
+				if (!_field->hasFocus() && !underMouse()) {
+					hideFast();
+				}
+			});
 		}
 	}, lifetime());
 }
@@ -275,8 +290,10 @@ void TextSelectionFlyout::updatePosition() {
 	if (targetY < 8) {
 		targetY = localCursor.y() + cursorRect.height() + 8;
 	}
+	targetY = std::clamp(targetY, 8, parent->height() - flyoutHeight - 8);
 
 	move(targetX, targetY);
+	raise();
 }
 
 void TextSelectionFlyout::showAnimated() {

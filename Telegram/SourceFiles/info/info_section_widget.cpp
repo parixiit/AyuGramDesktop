@@ -76,6 +76,10 @@ void SectionWidget::init() {
 	}, _connecting->lifetime());
 }
 
+not_null<WrapWidget*> SectionWidget::wrapWidget() const {
+	return _content.data();
+}
+
 Dialogs::RowDescriptor SectionWidget::activeChat() const {
 	return _content->activeChat();
 }
