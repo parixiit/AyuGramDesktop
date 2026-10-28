@@ -107,7 +107,7 @@ void NavButton::paintEvent(QPaintEvent *e) {
 	paintRipple(p, 0, 0);
 
 	if (_active) {
-		// Unigram Fluent selection indicator
+		// Modern selection indicator
 		p.setPen(Qt::NoPen);
 		p.setBrush(st::windowBgActive);
 		const auto pillHeight = 18;
