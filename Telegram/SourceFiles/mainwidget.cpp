@@ -2185,7 +2185,7 @@ void MainWidget::closeSettings() {
 	if (_mainSection) {
 		_mainSection.destroy();
 	}
-	_controller->setActiveChatEntry({});
+	_controller->setActiveChatEntry(Dialogs::Key());
 	updateMainSectionShown();
 	updateControlsGeometry();
 	if (_history) {
