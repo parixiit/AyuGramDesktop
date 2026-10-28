@@ -98,6 +98,10 @@ namespace Core {
 class Changelogs;
 } // namespace Core
 
+namespace Ayu {
+class SettingsNavWidget;
+} // namespace Ayu
+
 extern const char kForceComposeSearchOneColumn[];
 extern const char kOptionUseNewChatView[];
 
@@ -244,6 +248,9 @@ private:
 	void handleAudioUpdate(const Media::Player::TrackState &state);
 	void updateMediaPlaylistPosition(int x);
 	void updateControlsGeometry();
+	void setupSettingsNav();
+	void updateSettingsNavVisibility();
+	void closeSettings();
 	void updateMainSectionShown();
 	void updateDialogsWidthAnimated();
 	void updateThirdColumnToCurrentChat(
@@ -348,6 +355,7 @@ private:
 	Ui::Animations::Simple _a_dialogsWidth;
 
 	const base::unique_qptr<Dialogs::Widget> _dialogs;
+	object_ptr<Ayu::SettingsNavWidget> _settingsNav = { nullptr };
 	const base::unique_qptr<HistoryWidget> _history;
 	object_ptr<Window::SectionWidget> _mainSection = { nullptr };
 	object_ptr<Window::SectionWidget> _thirdSection = { nullptr };

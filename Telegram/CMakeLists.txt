@@ -161,6 +161,8 @@ set(ayugram_files
         ayu/ui/settings/settings_filters.h
         ayu/ui/settings/settings_main.cpp
         ayu/ui/settings/settings_main.h
+        ayu/ui/settings/settings_nav_widget.cpp
+        ayu/ui/settings/settings_nav_widget.h
         ayu/ui/settings/settings_other.cpp
         ayu/ui/settings/settings_other.h
         ayu/ui/settings/filters/settings_filters_list.cpp
