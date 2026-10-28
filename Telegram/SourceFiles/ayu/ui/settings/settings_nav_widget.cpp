@@ -61,7 +61,7 @@ public:
 
 protected:
 	void paintEvent(QPaintEvent *e) override;
-	void onStateChanged(State was, State now) override;
+	void onStateChanged(State was, StateChangeSource source) override;
 
 private:
 	const style::icon *_icon = nullptr;
@@ -89,8 +89,8 @@ void NavButton::setActive(bool active) {
 	}
 }
 
-void NavButton::onStateChanged(State was, State now) {
-	RippleButton::onStateChanged(was, now);
+void NavButton::onStateChanged(State was, StateChangeSource source) {
+	RippleButton::onStateChanged(was, source);
 	update();
 }
 
@@ -107,6 +107,7 @@ void NavButton::paintEvent(QPaintEvent *e) {
 	paintRipple(p, 0, 0);
 
 	if (_active) {
+		// Unigram Fluent selection indicator
 		p.setPen(Qt::NoPen);
 		p.setBrush(st::windowBgActive);
 		const auto pillHeight = 18;
@@ -164,9 +165,9 @@ void SettingsNavWidget::setupTopBar() {
 	_topBar.create(this);
 	_topBar->resize(width(), st::infoLayerTopBar.height);
 
-	_backButton.create(_topBar.data(), st::infoTopBarBack);
+	_backButton.create(_topBar.data(), st::infoLayerTopBar.back);
 	_backButton->moveToLeft(
-		st::infoLayerTopBar.backPosition.x(),
+		4,
 		(st::infoLayerTopBar.height - _backButton->height()) / 2);
 	_backButton->setClickedCallback([=] {
 		if (_closeCallback) {
@@ -300,7 +301,8 @@ void SettingsNavWidget::setupCategories() {
 		&st::menuIconTranslate,
 		tr::lng_settings_language(tr::now),
 		[=] {
-			LanguageBox::Show(_controller);
+			static auto Guard = base::binary_guard();
+			Guard = LanguageBox::Show(_controller);
 		});
 	addCategory(
 		&st::menuIconSettings,

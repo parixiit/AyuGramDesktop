@@ -9,6 +9,7 @@
 #pragma once
 
 #include "ui/rp_widget.h"
+#include "ui/widgets/scroll_area.h"
 #include "settings/settings_type.h"
 
 #include <vector>
@@ -20,7 +21,6 @@ struct icon;
 namespace Ui {
 class FlatLabel;
 class IconButton;
-class ScrollArea;
 class UserpicButton;
 class VerticalLayout;
 } // namespace Ui
