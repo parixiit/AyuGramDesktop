@@ -121,7 +121,8 @@ void TextSelectionFlyout::mouseMoveEvent(QMouseEvent *e) {
 	}
 }
 
-void TextSelectionFlyout::leaveEvent(QEvent *e) {
+void TextSelectionFlyout::leaveEventHook(QEvent *e) {
+	RpWidget::leaveEventHook(e);
 	if (_hoveredIndex != -1) {
 		_hoveredIndex = -1;
 		setToolTip(QString());
