@@ -15,7 +15,6 @@
 #include <map>
 #include <unordered_set>
 
-
 namespace Main {
 class Session;
 }
@@ -357,6 +356,7 @@ public:
 	[[nodiscard]] bool bypassContentProtection() const { return _bypassContentProtection.current(); }
 	[[nodiscard]] bool permanentViewOnceMedia() const { return _permanentViewOnceMedia.current(); }
 	[[nodiscard]] bool modernLayout() const { return _modernLayout.current(); }
+	[[nodiscard]] bool textSelectionFlyout() const { return _textSelectionFlyout.current(); }
 	[[nodiscard]] bool streamerMode() const { return _streamerMode.current(); }
 
 	void setSaveDeletedMessages(bool val);
@@ -449,6 +449,7 @@ public:
 	void setBypassContentProtection(bool val);
 	void setPermanentViewOnceMedia(bool val);
 	void setModernLayout(bool val);
+	void setTextSelectionFlyout(bool val);
 	void setStreamerMode(bool val);
 
 	[[nodiscard]] rpl::producer<bool> useGlobalGhostModeValue() const { return _useGlobalGhostMode.value(); }
@@ -633,6 +634,8 @@ public:
 	[[nodiscard]] rpl::producer<bool> permanentViewOnceMediaChanges() const { return _permanentViewOnceMedia.changes(); }
 	[[nodiscard]] rpl::producer<bool> modernLayoutValue() const { return _modernLayout.value(); }
 	[[nodiscard]] rpl::producer<bool> modernLayoutChanges() const { return _modernLayout.changes(); }
+	[[nodiscard]] rpl::producer<bool> textSelectionFlyoutValue() const { return _textSelectionFlyout.value(); }
+	[[nodiscard]] rpl::producer<bool> textSelectionFlyoutChanges() const { return _textSelectionFlyout.changes(); }
 	[[nodiscard]] rpl::producer<bool> streamerModeValue() const { return _streamerMode.value(); }
 	[[nodiscard]] rpl::producer<bool> streamerModeChanges() const { return _streamerMode.changes(); }
 
@@ -735,6 +738,7 @@ private:
 	rpl::variable<bool> _bypassContentProtection = true;
 	rpl::variable<bool> _permanentViewOnceMedia = true;
 	rpl::variable<bool> _modernLayout = true;
+	rpl::variable<bool> _textSelectionFlyout = true;
 	rpl::variable<bool> _streamerMode = false;
 
 	rpl::variable<bool> _useGlobalGhostMode = true;

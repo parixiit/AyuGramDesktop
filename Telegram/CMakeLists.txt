@@ -163,6 +163,8 @@ set(ayugram_files
         ayu/ui/settings/settings_main.h
         ayu/ui/settings/settings_nav_widget.cpp
         ayu/ui/settings/settings_nav_widget.h
+        ayu/ui/text_selection_flyout.cpp
+        ayu/ui/text_selection_flyout.h
         ayu/ui/settings/settings_other.cpp
         ayu/ui/settings/settings_other.h
         ayu/ui/settings/filters/settings_filters_list.cpp

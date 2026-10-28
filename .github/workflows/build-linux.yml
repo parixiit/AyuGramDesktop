@@ -37,6 +37,7 @@ jobs:
           path: ${{ runner.temp }}/.tdesktop-cache
           key: ${{ runner.os }}-ccache-${{ github.sha }}
           restore-keys: ${{ runner.os }}-ccache-
+          save-always: true
 
       - name: Prepare Build Container
         run: |

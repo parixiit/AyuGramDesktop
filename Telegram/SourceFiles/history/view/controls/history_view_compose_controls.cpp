@@ -143,8 +143,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 // AyuGram includes
 #include "data/data_ai_compose_tones.h"
 #include "ayu/ayu_settings.h"
+#include "ayu/ui/text_selection_flyout.h"
 #include "history/history_item_components.h"
-
 
 namespace HistoryView {
 namespace {
@@ -2410,6 +2410,9 @@ void ComposeControls::showStarted() {
 	if (_autocomplete) {
 		_autocomplete->hideFast();
 	}
+	if (_selectionFlyout) {
+		_selectionFlyout->hideFast();
+	}
 	_wrap->hide();
 	if (_writeRestricted) {
 		_writeRestricted->hide();
@@ -2429,6 +2432,9 @@ void ComposeControls::showFinished() {
 	_voiceRecordBar->hideFast();
 	if (_autocomplete) {
 		_autocomplete->hideFast();
+	}
+	if (_selectionFlyout) {
+		_selectionFlyout->hideFast();
 	}
 	updateWrappingVisibility();
 	_aiButton->raise();
@@ -2784,7 +2790,6 @@ void ComposeControls::init() {
 		auto p = QPainter(_wrap.get());
 		paintBackground(p, _wrap->rect(), clip);
 	}, _wrap->lifetime());
-
 
 	_header->editMsgIdValue(
 	) | rpl::on_next([=](const auto &id) {
@@ -3226,9 +3231,13 @@ void ComposeControls::updateSubmitSettings() {
 void ComposeControls::initFieldAutocomplete() {
 	_emojiSuggestions = nullptr;
 	_autocomplete = nullptr;
+	_selectionFlyout = nullptr;
 	if (!_history || _features.emojiOnlyPanel) {
 		return;
 	}
+	_selectionFlyout = std::make_unique<Ayu::TextSelectionFlyout>(
+		_parent,
+		_field.get());
 	ChatHelpers::InitFieldAutocomplete(_autocomplete, {
 		.parent = _parent,
 		.show = _show,

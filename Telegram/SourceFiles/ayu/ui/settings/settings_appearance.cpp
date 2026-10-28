@@ -226,6 +226,15 @@ void BuildAppearance(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 	builder.addDividerText(tr::ayu_ModernLayoutDescription());
 	builder.addSkip();
 	ayu.addSettingToggle({
+		.id = u"ayu/textSelectionFlyout"_q,
+		.title = tr::ayu_TextSelectionFlyout(),
+		.getter = &AyuSettings::textSelectionFlyout,
+		.setter = &AyuSettings::setTextSelectionFlyout,
+	});
+	builder.addSkip();
+	builder.addDividerText(tr::ayu_TextSelectionFlyoutDescription());
+	builder.addSkip();
+	ayu.addSettingToggle({
 		.id = u"ayu/roundedInnerCorners"_q,
 		.title = tr::ayu_RoundedInnerCorners(),
 		.getter = &AyuSettings::roundedInnerCorners,
