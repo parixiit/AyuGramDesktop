@@ -91,8 +91,8 @@ void TextSelectionFlyout::setupButtons() {
 		std::tuple{ ButtonType::Italic, u"I"_q, tr::lng_menu_formatting_italic(tr::now) },
 		std::tuple{ ButtonType::Underline, u"U"_q, tr::lng_menu_formatting_underline(tr::now) },
 		std::tuple{ ButtonType::Strikethrough, u"S"_q, tr::lng_menu_formatting_strike_out(tr::now) },
-		std::tuple{ ButtonType::Quote, QString::fromUtf8("“"), tr::lng_menu_formatting_blockquote(tr::now) },
-		std::tuple{ ButtonType::Monospace, QString::fromUtf8("<>"), tr::lng_menu_formatting_monospace(tr::now) },
+		std::tuple{ ButtonType::Quote, QString::fromUtf8("”"), tr::lng_menu_formatting_blockquote(tr::now) },
+		std::tuple{ ButtonType::Monospace, u"</>"_q, tr::lng_menu_formatting_monospace(tr::now) },
 		std::tuple{ ButtonType::Spoiler, QString(), tr::lng_menu_formatting_spoiler(tr::now) },
 		std::tuple{ ButtonType::Link, QString(), tr::lng_menu_formatting_link_create(tr::now) },
 	};
@@ -376,13 +376,14 @@ void TextSelectionFlyout::paintEvent(QPaintEvent *e) {
 		p.setPen(btn.active ? st::windowBgActive : st::windowFg);
 
 		if (btn.type == ButtonType::Spoiler) {
-			const auto spoilerRect = btn.rect.marginsRemoved({ 8, 10, 8, 10 });
-			QPen pen(p.pen());
-			pen.setStyle(Qt::DashLine);
-			pen.setWidth(1);
-			p.setPen(pen);
-			p.setBrush(Qt::NoBrush);
-			p.drawRoundedRect(spoilerRect, 3, 3);
+			const auto iconPos = QPoint(
+				btn.rect.x() + (btn.rect.width() - st::menuIconSpoiler.width()) / 2,
+				btn.rect.y() + (btn.rect.height() - st::menuIconSpoiler.height()) / 2);
+			if (btn.active) {
+				st::menuIconSpoiler.paint(p, iconPos, width(), st::windowBgActive->c);
+			} else {
+				st::menuIconSpoiler.paint(p, iconPos, width());
+			}
 		} else if (btn.type == ButtonType::Link) {
 			const auto iconPos = QPoint(
 				btn.rect.x() + (btn.rect.width() - st::menuIconLink.width()) / 2,
@@ -392,6 +393,18 @@ void TextSelectionFlyout::paintEvent(QPaintEvent *e) {
 			} else {
 				st::menuIconLink.paint(p, iconPos, width());
 			}
+		} else if (btn.type == ButtonType::Monospace) {
+			auto font = st::semiboldFont->f;
+			font.setFamily(u"monospace"_q);
+			font.setBold(true);
+			p.setFont(font);
+			p.drawText(btn.rect, Qt::AlignCenter, btn.text);
+		} else if (btn.type == ButtonType::Quote) {
+			auto font = st::semiboldFont->f;
+			font.setPointSize(font.pointSize() + 3);
+			font.setBold(true);
+			p.setFont(font);
+			p.drawText(btn.rect.translated(0, -1), Qt::AlignCenter, btn.text);
 		} else if (btn.type == ButtonType::Italic) {
 			auto font = st::semiboldFont->f;
 			font.setItalic(true);

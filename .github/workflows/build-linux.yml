@@ -62,6 +62,7 @@ jobs:
       - name: Build AyuGram Desktop
         run: |
           mkdir -p ${{ runner.temp }}/.tdesktop-cache
+          chmod -R 777 ${{ runner.temp }}/.tdesktop-cache || true
           docker run --rm \
             -u $(id -u) \
             -v "$PWD:/usr/src/tdesktop" \
@@ -74,7 +75,9 @@ jobs:
             -D TDESKTOP_API_HASH=b18441a1ff607e10a989891a5462e627 \
             -D TDESKTOP_API_TEST=ON \
             -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON \
-            -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON
+            -D DESKTOP_APP_DISABLE_CRASH_REPORTS=ON \
+            -D CMAKE_C_COMPILER_LAUNCHER=ccache \
+            -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Package Binary
         run: |

@@ -91,6 +91,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QAction>
 
 // AyuGram includes
+#include "ayu/ayu_settings.h"
 #include "ayu/features/message_shot/message_shot.h"
 #include "window/themes/window_theme_preview.h"
 
@@ -2625,8 +2626,12 @@ void SetupDefaultThemes(
 			return;
 		}
 		const auto fullSkips = width - count * single;
-		const auto skip = fullSkips / float64(skips);
-		auto left = padding.left() + 0.;
+		const auto maxSkip = AyuSettings::getInstance().modernLayout() ? 16.0 : 9999.0;
+		const auto skip = std::min(fullSkips / float64(skips), maxSkip);
+		const auto totalRowWidth = count * single + skips * skip;
+		auto left = (width > totalRowWidth)
+			? padding.left() + (width - totalRowWidth) / 2.
+			: padding.left() + 0.;
 		for (const auto button : buttons) {
 			button->resizeToWidth(single);
 			button->moveToLeft(int(base::SafeRound(left)), 0);

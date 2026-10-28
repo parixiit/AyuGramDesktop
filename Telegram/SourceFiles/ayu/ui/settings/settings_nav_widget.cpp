@@ -59,6 +59,11 @@ public:
 		return _active;
 	}
 
+	int resizeGetHeight(int newWidth) override {
+		resize(newWidth, 42);
+		return 42;
+	}
+
 protected:
 	void paintEvent(QPaintEvent *e) override;
 	void onStateChanged(State was, StateChangeSource source) override;
@@ -199,7 +204,7 @@ void SettingsNavWidget::setupProfileCover() {
 	_userpic->moveToLeft(16, 11);
 
 	_name.create(_cover.data(), _user->name(), st::infoProfileCover.name);
-	_name->moveToLeft(74, 14);
+	_name->moveToLeft(78, 13);
 
 	const auto username = !_user->username().isEmpty()
 		? ("@" + _user->username())
@@ -207,7 +212,7 @@ void SettingsNavWidget::setupProfileCover() {
 		? _user->phone()
 		: tr::lng_status_online(tr::now);
 	_status.create(_cover.data(), username, st::defaultFlatLabel);
-	_status->moveToLeft(74, 38);
+	_status->moveToLeft(78, 37);
 
 	_qrButton.create(_cover.data(), st::infoProfileLabeledButtonQr);
 	_qrButton->moveToRight(16, 16);
@@ -324,6 +329,9 @@ void SettingsNavWidget::setupCategories() {
 		});
 
 	Ui::AddSkip(_content, 12);
+	_content->resizeToWidth(width());
+	_scroll->show();
+	_content->show();
 }
 
 void SettingsNavWidget::setActiveType(Settings::Type type) {
@@ -359,10 +367,10 @@ void SettingsNavWidget::resizeEvent(QResizeEvent *e) {
 	if (_cover) {
 		_cover->setGeometryToLeft(0, topBarHeight, width(), coverHeight);
 		if (_name) {
-			_name->resizeToWidth(std::max(0, width() - 74 - 56));
+			_name->resizeToWidth(std::max(0, width() - 78 - 56));
 		}
 		if (_status) {
-			_status->resizeToWidth(std::max(0, width() - 74 - 56));
+			_status->resizeToWidth(std::max(0, width() - 78 - 56));
 		}
 		if (_qrButton) {
 			_qrButton->moveToRight(16, 16);
@@ -371,6 +379,9 @@ void SettingsNavWidget::resizeEvent(QResizeEvent *e) {
 	if (_scroll) {
 		const auto scrollY = topBarHeight + coverHeight;
 		_scroll->setGeometryToLeft(0, scrollY, width(), height() - scrollY);
+		if (_content) {
+			_content->resizeToWidth(width());
+		}
 	}
 }
 
