@@ -14,9 +14,7 @@
 
 #include <vector>
 
-namespace style {
-struct icon;
-} // namespace style
+class UserData;
 
 namespace Ui {
 class FlatLabel;

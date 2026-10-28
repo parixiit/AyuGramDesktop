@@ -279,7 +279,7 @@ void SettingsNavWidget::setupCategories() {
 		Settings::NotificationsId());
 	addCategory(
 		&st::menuIconStats,
-		tr::lng_settings_advanced(tr::now),
+		tr::lng_local_storage_title(tr::now),
 		Settings::LocalStorageId());
 	addAction(
 		&st::menuIconPowerUsage,
