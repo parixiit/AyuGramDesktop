@@ -104,7 +104,7 @@ void Manager::requestChat(not_null<UserData*> user) {
 				auto chat = std::make_shared<SecretChat>(
 					chatId,
 					accessHash,
-					user->id,
+					peerToUser(user->id),
 					true);
 				chat->setLocalPrivateKey(std::move(priv));
 				chat->setState(State::Waiting);
@@ -174,9 +174,9 @@ void Manager::discardChat(int32 chatId, bool deleteHistory) {
 		saveSessionToDb(secret);
 	}
 
-	auto flags = MTPDmessages_discardEncryption::Flags(0);
+	auto flags = MTPmessages_DiscardEncryption::Flags(0);
 	if (deleteHistory) {
-		flags |= MTPDmessages_discardEncryption::Flag::f_delete_history;
+		flags |= MTPmessages_DiscardEncryption::Flag::f_delete_history;
 	}
 	_session->api().request(MTPmessages_DiscardEncryption(
 		MTP_flags(flags),
@@ -504,7 +504,8 @@ void Manager::loadSessionsFromDb() {
 			s.isCreator);
 		chat->setState(static_cast<State>(s.state));
 		if (!s.authKey.empty()) {
-			auto keyBytes = bytes::make_vector(bytes::make_span(s.authKey));
+			auto keyBytes = bytes::vector(s.authKey.size(), gsl::byte{});
+			memcpy(keyBytes.data(), s.authKey.data(), s.authKey.size());
 			chat->setAuthKey(std::move(keyBytes));
 		}
 		chat->setKeyFingerprint(s.keyFingerprint);
@@ -513,7 +514,7 @@ void Manager::loadSessionsFromDb() {
 		_chats[s.chatId] = chat;
 
 		const auto messages = AyuDatabase::getSecretChatMessages(s.chatId, 50);
-		const auto partnerUser = _session->data().user(s.partnerId);
+		const auto partnerUser = _session->data().user(UserId(s.partnerId));
 		for (const auto &msg : messages) {
 			const auto isOut = (msg.senderId == _session->userId().bare);
 			insertLocalMessage(
@@ -539,7 +540,10 @@ void Manager::saveSessionToDb(const std::shared_ptr<SecretChat> &chat) {
 	entity.isCreator = chat->isCreator();
 	entity.state = static_cast<int>(chat->state());
 	const auto &key = chat->authKey();
-	entity.authKey = std::vector<char>(key.data(), key.data() + key.size());
+	entity.authKey.resize(key.size());
+	if (!key.empty()) {
+		memcpy(entity.authKey.data(), key.data(), key.size());
+	}
 	entity.keyFingerprint = chat->keyFingerprint();
 	entity.inSeqNo = chat->inSeqNo();
 	entity.outSeqNo = chat->outSeqNo();
@@ -580,7 +584,7 @@ void Manager::insertLocalMessage(
 	const auto history = _session->data().history(partnerPeer);
 
 	using Flag = MTPDmessage::Flag;
-	auto flags = Flag::f_from_id;
+	auto flags = MTPDmessage::Flags(Flag::f_from_id);
 	if (isOut) {
 		flags |= Flag::f_out;
 	}

@@ -123,7 +123,7 @@ bytes::vector Crypto::EncryptPacket(
 	const auto [aesKey, aesIv] = DeriveAesKeyIv(authKey, msgKey, x);
 
 	auto encrypted = bytes::vector(totalPaddedLen, gsl::byte{});
-	aesIgeEncryptRaw(
+	MTP::aesIgeEncryptRaw(
 		padded.data(),
 		encrypted.data(),
 		totalPaddedLen,
@@ -162,7 +162,7 @@ std::optional<DecryptedPacket> Crypto::DecryptPacket(
 	const auto [aesKey, aesIv] = DeriveAesKeyIv(authKey, msgKey, x);
 
 	auto decrypted = bytes::vector(encrypted.size(), gsl::byte{});
-	aesIgeDecryptRaw(
+	MTP::aesIgeDecryptRaw(
 		encrypted.data(),
 		decrypted.data(),
 		encrypted.size(),
@@ -212,7 +212,7 @@ EncryptedFilePayload Crypto::EncryptFilePayload(bytes::const_span fileBytes) {
 	}
 
 	auto ciphertext = bytes::vector(totalLen, gsl::byte{});
-	aesIgeEncryptRaw(
+	MTP::aesIgeEncryptRaw(
 		padded.data(),
 		ciphertext.data(),
 		totalLen,
@@ -241,7 +241,7 @@ bytes::vector Crypto::DecryptFilePayload(
 		return {};
 	}
 	auto plaintext = bytes::vector(ciphertext.size(), gsl::byte{});
-	aesIgeDecryptRaw(
+	MTP::aesIgeDecryptRaw(
 		ciphertext.data(),
 		plaintext.data(),
 		ciphertext.size(),

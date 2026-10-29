@@ -8,6 +8,7 @@
  */
 #pragma once
 
+#include "data/data_peer_id.h"
 #include "ayu/secret/secret_chat.h"
 #include "ayu/secret/secret_chat_crypto.h"
 #include "ayu/secret/secret_chat_layer.h"
@@ -52,6 +53,9 @@ public:
 
 	[[nodiscard]] std::shared_ptr<SecretChat> chat(int32 chatId) const;
 	[[nodiscard]] std::shared_ptr<SecretChat> chatForUser(UserId userId) const;
+	[[nodiscard]] std::shared_ptr<SecretChat> chatForUser(PeerId peerId) const {
+		return chatForUser(peerToUser(peerId));
+	}
 	[[nodiscard]] const std::map<int32, std::shared_ptr<SecretChat>> &chats() const;
 
 	void handleUpdateEncryption(const MTPDupdateEncryption &update);
