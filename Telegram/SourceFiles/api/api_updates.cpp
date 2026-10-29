@@ -2188,6 +2188,7 @@ void Updates::feedUpdate(const MTPUpdate &update) {
 	} break;
 
 	case mtpc_updateNewEncryptedMessage: {
+		session().secretChats().handleUpdateNewEncryptedMessage(update.c_updateNewEncryptedMessage());
 	} break;
 
 	case mtpc_updateEncryptedChatTyping: {

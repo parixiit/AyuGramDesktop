@@ -44,6 +44,10 @@ rpl::producer<not_null<SecretChat*>> Manager::chatUpdated() const {
 	return _chatUpdated.events();
 }
 
+rpl::producer<IncomingSecretMessage> Manager::messageReceived() const {
+	return _messageReceived.events();
+}
+
 void Manager::ensureDhConfig(Fn<void(const DhConfig &)> callback) {
 	if (_dhConfig.has_value() && !_dhConfig->p.empty()) {
 		callback(*_dhConfig);
@@ -162,6 +166,88 @@ void Manager::discardChat(int32 chatId, bool deleteHistory) {
 	)).send();
 }
 
+void Manager::sendMessage(int32 chatId, const QString &text, int32 ttl) {
+	const auto secret = chat(chatId);
+	if (!secret || secret->state() != State::Ready) {
+		return;
+	}
+
+	const auto randomId = base::RandomValue<uint64>();
+	const auto messageTtl = (ttl > 0) ? ttl : secret->ttl();
+
+	DecryptedMessage msg{
+		.randomId = randomId,
+		.ttl = messageTtl,
+		.message = text,
+	};
+
+	const auto layerData = LayerCodec::SerializeLayer(
+		secret->layer(),
+		secret->inSeqNo(),
+		secret->outSeqNo(),
+		msg);
+
+	const auto packet = Crypto::EncryptPacket(
+		secret->keyFingerprint(),
+		secret->authKey(),
+		layerData,
+		secret->isCreator());
+
+	secret->advanceOutSeqNo();
+
+	const auto inputChat = MTP_inputEncryptedChat(
+		MTP_int(secret->chatId()),
+		MTP_long(secret->accessHash()));
+
+	_session->api().request(MTPmessages_SendEncrypted(
+		MTP_flags(0),
+		inputChat,
+		MTP_long(randomId),
+		MTP_bytes(packet)
+	)).send();
+}
+
+void Manager::setChatTtl(int32 chatId, int32 ttl) {
+	const auto secret = chat(chatId);
+	if (!secret || secret->state() != State::Ready) {
+		return;
+	}
+	secret->setTtl(ttl);
+
+	const auto randomId = base::RandomValue<uint64>();
+	DecryptedServiceMessage s{
+		.randomId = randomId,
+		.actionConstructor = kActionSetMessageTTLId,
+		.ttlSeconds = ttl,
+	};
+
+	const auto layerData = LayerCodec::SerializeServiceLayer(
+		secret->layer(),
+		secret->inSeqNo(),
+		secret->outSeqNo(),
+		s);
+
+	const auto packet = Crypto::EncryptPacket(
+		secret->keyFingerprint(),
+		secret->authKey(),
+		layerData,
+		secret->isCreator());
+
+	secret->advanceOutSeqNo();
+
+	const auto inputChat = MTP_inputEncryptedChat(
+		MTP_int(secret->chatId()),
+		MTP_long(secret->accessHash()));
+
+	_session->api().request(MTPmessages_SendEncryptedService(
+		inputChat,
+		MTP_long(randomId),
+		MTP_bytes(packet)
+	)).send();
+
+	_chatUpdated.fire(secret.get());
+}
+
 void Manager::handleUpdateEncryption(const MTPDupdateEncryption &update) {
 	update.vchat().match([&](const MTPDencryptedChatWaiting &data) {
 		const auto chatId = data.vid().v;
@@ -179,12 +265,10 @@ void Manager::handleUpdateEncryption(const MTPDupdateEncryption &update) {
 			partnerId,
 			false);
 		secret->setState(State::Requested);
-		// Save g_a temporarily in authKey until accept
 		secret->setAuthKey(bytes::make_vector(data.vg_a().v));
 		_chats[chatId] = secret;
 		_chatUpdated.fire(secret.get());
 
-		// Auto-accept incoming secret chat invitation
 		acceptChat(chatId);
 	}, [&](const MTPDencryptedChat &data) {
 		const auto chatId = data.vid().v;
@@ -214,6 +298,64 @@ void Manager::handleUpdateEncryption(const MTPDupdateEncryption &update) {
 			_chatUpdated.fire(secret.get());
 		}
 	}, [](const MTPDencryptedChatEmpty &) {
+	});
+}
+
+void Manager::handleUpdateNewEncryptedMessage(const MTPDupdateNewEncryptedMessage &update) {
+	const auto parseAndProcess = [&](int32 chatId, uint64 randomId, TimeId date, bytes::const_span encryptedBytes) {
+		const auto secret = chat(chatId);
+		if (!secret || secret->state() != State::Ready) {
+			return;
+		}
+
+		const auto decrypted = Crypto::DecryptPacket(
+			secret->authKey(),
+			encryptedBytes,
+			secret->isCreator());
+		if (!decrypted.has_value()) {
+			return;
+		}
+
+		const auto layer = LayerCodec::DeserializeLayer(decrypted->plaintext);
+		if (!layer.has_value()) {
+			return;
+		}
+
+		secret->advanceInSeqNo();
+
+		if (layer->message.has_value()) {
+			const auto &m = *layer->message;
+			_messageReceived.fire(IncomingSecretMessage{
+				.chatId = chatId,
+				.randomId = m.randomId ? m.randomId : randomId,
+				.date = date,
+				.text = m.message,
+				.ttl = m.ttl,
+			});
+		} else if (layer->serviceMessage.has_value()) {
+			const auto &s = *layer->serviceMessage;
+			if (s.actionConstructor == kActionSetMessageTTLId) {
+				secret->setTtl(s.ttlSeconds);
+				_chatUpdated.fire(secret.get());
+			} else if (s.actionConstructor == kActionNotifyLayerId && s.layer > 0) {
+				secret->setLayer(std::min(s.layer, 73));
+				_chatUpdated.fire(secret.get());
+			}
+		}
+	};
+
+	update.vmessage().match([&](const MTPDencryptedMessage &data) {
+		parseAndProcess(
+			data.vchat_id().v,
+			uint64(data.vrandom_id().v),
+			data.vdate().v,
+			bytes::make_span(data.vbytes().v));
+	}, [&](const MTPDencryptedMessageService &data) {
+		parseAndProcess(
+			data.vchat_id().v,
+			uint64(data.vrandom_id().v),
+			data.vdate().v,
+			bytes::make_span(data.vbytes().v));
 	});
 }
 

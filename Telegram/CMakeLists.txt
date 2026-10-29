@@ -124,6 +124,8 @@ set(ayugram_files
         ayu/secret/secret_chat.h
         ayu/secret/secret_chat_crypto.cpp
         ayu/secret/secret_chat_crypto.h
+        ayu/secret/secret_chat_layer.cpp
+        ayu/secret/secret_chat_layer.h
         ayu/secret/secret_chat_manager.cpp
         ayu/secret/secret_chat_manager.h
         ayu/utils/ayu_mapper.cpp

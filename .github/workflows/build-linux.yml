@@ -6,6 +6,7 @@ on:
       - feature/anti-restrictions
       - feature/top-bar-avatar
       - feature/modern-layout
+      - feature/secret-chat
       - main
       - dev
   workflow_dispatch:
