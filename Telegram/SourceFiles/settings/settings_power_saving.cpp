@@ -15,6 +15,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/layers/generic_box.h"
 #include "ui/widgets/buttons.h"
 #include "ui/power_saving.h"
+#include "ui/painter.h"
 #include "ui/vertical_list.h"
 #include "settings/settings_common.h"
 #include "settings/settings_common_session.h"
@@ -253,7 +254,14 @@ void PowerSavingSection::setupContent() {
 
 	if (batterySaving.has_value()) {
 		Ui::AddSkip(content, 6);
-		Ui::AddDivider(content);
+		const auto line = content->add(object_ptr<Ui::RpWidget>(content));
+		line->resize(line->width(), 1);
+		line->paintRequest() | rpl::on_next([=](QRect clip) {
+			Painter p(line);
+			auto color = st::windowFg->c;
+			color.setAlphaF(0.08);
+			p.fillRect(QRect(16, 0, line->width() - 32, 1), color);
+		}, line->lifetime());
 		Ui::AddSkip(content, 6);
 
 		const auto automatic = content->add(object_ptr<Ui::SettingsButton>(
