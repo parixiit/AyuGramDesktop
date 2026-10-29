@@ -157,7 +157,7 @@ void NavButton::paintEvent(QPaintEvent *e) {
 		_icon->paint(p, QPoint(iconX, iconY), width(), fg);
 	}
 
-	p.setFont(st::defaultFont);
+	p.setFont(st::normalFont);
 	p.setPen(fg);
 	const auto textX = 54;
 	const auto textW = width() - textX - 16;
@@ -356,7 +356,7 @@ void SettingsNavWidget::setupCategories() {
 			icon,
 			text,
 			[=] {
-				if (_activeButton == btn) {
+				if (_activeType == type) {
 					return;
 				}
 				setActiveType(type);
@@ -454,6 +454,7 @@ void SettingsNavWidget::setupCategories() {
 }
 
 void SettingsNavWidget::setActiveType(Settings::Type type) {
+	_activeType = type;
 	for (const auto &[btnType, btn] : _typeButtons) {
 		if (btnType == type) {
 			setActiveButton(btn);

@@ -1,3 +1,4 @@
+#include "ayu/secret/secret_chat_manager.h"
 /*
 This file is part of Telegram Desktop,
 the official desktop application for the Telegram messaging service.
@@ -2193,6 +2194,7 @@ void Updates::feedUpdate(const MTPUpdate &update) {
 	} break;
 
 	case mtpc_updateEncryption: {
+		session().secretChats().handleUpdateEncryption(update.c_updateEncryption());
 	} break;
 
 	case mtpc_updateEncryptedMessagesRead: {

@@ -85,6 +85,7 @@ private:
 	std::vector<std::pair<Settings::Type, NavButton*>> _typeButtons;
 	std::vector<NavButton*> _allButtons;
 	NavButton *_activeButton = nullptr;
+	Settings::Type _activeType = Settings::Type(0);
 
 };
 

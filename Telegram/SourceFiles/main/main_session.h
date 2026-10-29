@@ -84,6 +84,10 @@ namespace Ui {
 struct ColorIndicesCompressed;
 } // namespace Ui
 
+namespace Ayu::Secret {
+class Manager;
+} // namespace Ayu::Secret
+
 namespace Main {
 
 class Account;
@@ -255,6 +259,10 @@ public:
 	[[nodiscard]] MTP::DcId mainDcId() const;
 	[[nodiscard]] MTP::Instance &mtp() const;
 	[[nodiscard]] const MTP::ConfigFields &serverConfig() const;
+	[[nodiscard]] Ayu::Secret::Manager &secretChats() const {
+		return *_secretChats;
+	}
+
 	[[nodiscard]] ApiWrap &api() {
 		return *_api;
 	}
@@ -310,6 +318,7 @@ private:
 
 	const std::unique_ptr<SessionSettings> _settings;
 	const std::unique_ptr<Data::Changes> _changes;
+	const std::unique_ptr<Ayu::Secret::Manager> _secretChats;
 	const std::unique_ptr<ApiWrap> _api;
 	const std::unique_ptr<Api::Updates> _updates;
 	const std::unique_ptr<Api::SendProgressManager> _sendProgressManager;

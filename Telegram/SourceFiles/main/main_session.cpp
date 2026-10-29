@@ -1,3 +1,4 @@
+#include "ayu/secret/secret_chat_manager.h"
 /*
 This file is part of Telegram Desktop,
 the official desktop application for the Telegram messaging service.
@@ -146,6 +147,7 @@ Session::Session(
 , _account(account)
 , _settings(std::move(settings))
 , _changes(std::make_unique<Data::Changes>(this))
+, _secretChats(std::make_unique<Ayu::Secret::Manager>(this))
 , _api(std::make_unique<ApiWrap>(this))
 , _updates(std::make_unique<Api::Updates>(this))
 , _sendProgressManager(std::make_unique<Api::SendProgressManager>(this))
