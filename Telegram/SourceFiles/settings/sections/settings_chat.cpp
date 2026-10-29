@@ -2609,7 +2609,7 @@ void SetupDefaultThemes(
 	}
 	block->resize(block->width(), buttons[0]->height());
 	block->widthValue(
-	) | rpl::on_next([buttons = std::move(buttons)](int width) {
+	) | rpl::on_next([block, buttons = std::move(buttons)](int width) {
 		Expects(!buttons.empty());
 
 		const auto padding = st::settingsButtonNoIcon.padding;
