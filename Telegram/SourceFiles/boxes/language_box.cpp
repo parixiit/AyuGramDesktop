@@ -1754,7 +1754,6 @@ void LanguageSection::setupContent() {
 		Core::App().saveSettingsDelayed();
 	}, translateChat->lifetime());
 
-	using Languages = std::vector<LanguageId>;
 	const auto translateSkipWrap = content->add(
 		object_ptr<Ui::SlideWrap<Ui::VerticalLayout>>(
 			content,
@@ -1770,7 +1769,10 @@ void LanguageSection::setupContent() {
 		translateSkipWrap->entity(),
 		tr::lng_translate_settings_choose(),
 		Core::App().settings().skipTranslationLanguagesValue(
-		) | rpl::map([](const Languages &list) {
+		) | rpl::map([](const std::vector<::LanguageId> &list) -> QString {
+			if (list.empty()) {
+				return QString();
+			}
 			return (list.size() > 1)
 				? tr::lng_languages_count(tr::now, lt_count, list.size())
 				: Ui::LanguageName(list.front());
