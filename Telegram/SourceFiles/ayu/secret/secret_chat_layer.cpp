@@ -169,10 +169,61 @@ bytes::vector LayerCodec::SerializeLayer(
 	if (message.noWebpage) flags |= (1 << 1);
 	if (message.replyToRandomId != 0) flags |= (1 << 3);
 	if (message.silent) flags |= (1 << 5);
+	if (message.media.has_value() && message.media->type != MediaType::Empty) {
+		flags |= (1 << 9);
+	}
 	w.writeUInt32(flags);
 	w.writeUInt64(message.randomId);
 	w.writeInt32(message.ttl);
 	w.writeString(message.message);
+
+	if (message.media.has_value() && message.media->type != MediaType::Empty) {
+		const auto &media = *message.media;
+		if (media.type == MediaType::Photo) {
+			w.writeUInt32(kDecryptedMessageMediaPhotoId);
+			w.writeBytes(media.thumb);
+			w.writeInt32(media.thumbW);
+			w.writeInt32(media.thumbH);
+			w.writeInt32(media.w);
+			w.writeInt32(media.h);
+			w.writeInt32(media.size);
+			w.writeBytes(media.key);
+			w.writeBytes(media.iv);
+			w.writeString(media.caption);
+		} else if (media.type == MediaType::Document) {
+			w.writeUInt32(kDecryptedMessageMediaDocumentId);
+			w.writeBytes(media.thumb);
+			w.writeInt32(media.thumbW);
+			w.writeInt32(media.thumbH);
+			w.writeString(media.mimeType);
+			w.writeInt32(media.size);
+			w.writeBytes(media.key);
+			w.writeBytes(media.iv);
+			w.writeString(media.fileName);
+		} else if (media.type == MediaType::Video) {
+			w.writeUInt32(kDecryptedMessageMediaVideoId);
+			w.writeBytes(media.thumb);
+			w.writeInt32(media.thumbW);
+			w.writeInt32(media.thumbH);
+			w.writeInt32(media.duration);
+			w.writeString(media.mimeType);
+			w.writeInt32(media.w);
+			w.writeInt32(media.h);
+			w.writeInt32(media.size);
+			w.writeBytes(media.key);
+			w.writeBytes(media.iv);
+			w.writeString(media.caption);
+		} else if (media.type == MediaType::Audio) {
+			w.writeUInt32(kDecryptedMessageMediaAudioId);
+			w.writeInt32(media.duration);
+			w.writeString(media.mimeType);
+			w.writeInt32(media.size);
+			w.writeBytes(media.key);
+			w.writeBytes(media.iv);
+		} else {
+			w.writeUInt32(kDecryptedMessageMediaEmptyId);
+		}
+	}
 
 	if (message.replyToRandomId != 0) {
 		w.writeUInt64(message.replyToRandomId);
@@ -246,6 +297,58 @@ std::optional<DecryptedLayer> LayerCodec::DeserializeLayer(bytes::const_span dat
 		if (!r.readUInt64(m.randomId)) return std::nullopt;
 		if (!r.readInt32(m.ttl)) return std::nullopt;
 		if (!r.readString(m.message)) return std::nullopt;
+		if (flags & (1 << 9)) {
+			uint32 mediaCtor = 0;
+			if (r.readUInt32(mediaCtor)) {
+				DecryptedMedia media;
+				if (mediaCtor == kDecryptedMessageMediaPhotoId) {
+					media.type = MediaType::Photo;
+					r.readBytes(media.thumb);
+					r.readInt32(media.thumbW);
+					r.readInt32(media.thumbH);
+					r.readInt32(media.w);
+					r.readInt32(media.h);
+					r.readInt32(media.size);
+					r.readBytes(media.key);
+					r.readBytes(media.iv);
+					r.readString(media.caption);
+					m.media = std::move(media);
+				} else if (mediaCtor == kDecryptedMessageMediaDocumentId) {
+					media.type = MediaType::Document;
+					r.readBytes(media.thumb);
+					r.readInt32(media.thumbW);
+					r.readInt32(media.thumbH);
+					r.readString(media.mimeType);
+					r.readInt32(media.size);
+					r.readBytes(media.key);
+					r.readBytes(media.iv);
+					r.readString(media.fileName);
+					m.media = std::move(media);
+				} else if (mediaCtor == kDecryptedMessageMediaVideoId) {
+					media.type = MediaType::Video;
+					r.readBytes(media.thumb);
+					r.readInt32(media.thumbW);
+					r.readInt32(media.thumbH);
+					r.readInt32(media.duration);
+					r.readString(media.mimeType);
+					r.readInt32(media.w);
+					r.readInt32(media.h);
+					r.readInt32(media.size);
+					r.readBytes(media.key);
+					r.readBytes(media.iv);
+					r.readString(media.caption);
+					m.media = std::move(media);
+				} else if (mediaCtor == kDecryptedMessageMediaAudioId) {
+					media.type = MediaType::Audio;
+					r.readInt32(media.duration);
+					r.readString(media.mimeType);
+					r.readInt32(media.size);
+					r.readBytes(media.key);
+					r.readBytes(media.iv);
+					m.media = std::move(media);
+				}
+			}
+		}
 		if (flags & (1 << 3)) {
 			if (!r.readUInt64(m.replyToRandomId)) return std::nullopt;
 		}

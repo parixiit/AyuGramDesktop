@@ -29,6 +29,36 @@ inline constexpr uint32 kActionResendId = 0x51111913;
 inline constexpr uint32 kActionNotifyLayerId = 0xf3048883;
 inline constexpr uint32 kActionTypingId = 0xccb27641;
 
+inline constexpr uint32 kDecryptedMessageMediaEmptyId = 0x089f5c46;
+inline constexpr uint32 kDecryptedMessageMediaPhotoId = 0xf14d96a4;
+inline constexpr uint32 kDecryptedMessageMediaVideoId = 0x970c8c0e;
+inline constexpr uint32 kDecryptedMessageMediaDocumentId = 0x7afe8ac2;
+inline constexpr uint32 kDecryptedMessageMediaAudioId = 0x57e0a9cb;
+
+enum class MediaType {
+	Empty,
+	Photo,
+	Video,
+	Document,
+	Audio,
+};
+
+struct DecryptedMedia {
+	MediaType type = MediaType::Empty;
+	bytes::vector key;
+	bytes::vector iv;
+	bytes::vector thumb;
+	int32 thumbW = 0;
+	int32 thumbH = 0;
+	int32 w = 0;
+	int32 h = 0;
+	int32 size = 0;
+	int32 duration = 0;
+	QString mimeType;
+	QString fileName;
+	QString caption;
+};
+
 struct DecryptedMessage {
 	uint64 randomId = 0;
 	int32 ttl = 0;
@@ -36,6 +66,7 @@ struct DecryptedMessage {
 	bool silent = false;
 	bool noWebpage = false;
 	uint64 replyToRandomId = 0;
+	std::optional<DecryptedMedia> media;
 };
 
 struct DecryptedServiceMessage {

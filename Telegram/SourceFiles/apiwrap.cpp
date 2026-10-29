@@ -5436,6 +5436,16 @@ void ApiWrap::sendMediaWithRandomId(
 		| (options.invertCaption ? Flag::f_invert_media : Flag(0))
 		| (starsPaid ? Flag::f_allow_paid_stars : Flag(0));
 
+	if (const auto user = peer->asUser()) {
+		if (const auto secret = _session->secretChats().chatForUser(user->id)) {
+			if (secret->state() == Ayu::Secret::State::Ready) {
+				_session->secretChats().sendMedia(secret->chatId(), item, caption.text);
+				if (done) done(true);
+				return;
+			}
+		}
+	}
+
 	auto &histories = history->owner().histories();
 	const auto itemId = item->fullId();
 	histories.sendPreparedMessage(

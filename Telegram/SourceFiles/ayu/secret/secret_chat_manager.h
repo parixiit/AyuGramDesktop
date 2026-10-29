@@ -25,6 +25,7 @@ class Session;
 
 class UserData;
 class PeerData;
+class HistoryItem;
 
 namespace Ayu::Secret {
 
@@ -46,6 +47,7 @@ public:
 	void discardChat(int32 chatId, bool deleteHistory = true);
 
 	void sendMessage(int32 chatId, const QString &text, int32 ttl = 0);
+	void sendMedia(int32 chatId, not_null<HistoryItem*> item, const QString &caption);
 	void setChatTtl(int32 chatId, int32 ttl);
 
 	[[nodiscard]] std::shared_ptr<SecretChat> chat(int32 chatId) const;

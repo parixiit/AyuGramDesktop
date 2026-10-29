@@ -14,6 +14,9 @@
 #include "data/data_session.h"
 #include "data/data_peer_id.h"
 #include "history/history.h"
+#include "history/history_item.h"
+#include "data/data_document.h"
+#include "data/data_photo.h"
 
 #include "apiwrap.h"
 #include "base/random.h"
@@ -237,6 +240,78 @@ void Manager::sendMessage(int32 chatId, const QString &text, int32 ttl) {
 		MTP_bytes(packet)
 	)).send();
 }
+void Manager::sendMedia(int32 chatId, not_null<HistoryItem*> item, const QString &caption) {
+	const auto secret = chat(chatId);
+	if (!secret || secret->state() != State::Ready) {
+		return;
+	}
+
+	const auto randomId = base::RandomValue<uint64>();
+	DecryptedMedia media;
+
+	auto dummyKey = bytes::vector(32, gsl::byte{});
+	auto dummyIv = bytes::vector(32, gsl::byte{});
+	bytes::set_random(dummyKey);
+	bytes::set_random(dummyIv);
+
+	if (const auto doc = item->media() ? item->media()->document() : nullptr) {
+		media.type = MediaType::Document;
+		media.fileName = doc->filename();
+		media.mimeType = doc->mimeString();
+		media.size = doc->size;
+		media.key = std::move(dummyKey);
+		media.iv = std::move(dummyIv);
+	} else {
+		media.type = MediaType::Photo;
+		media.caption = caption;
+		media.key = std::move(dummyKey);
+		media.iv = std::move(dummyIv);
+	}
+
+	DecryptedMessage msg{
+		.randomId = randomId,
+		.ttl = secret->ttl(),
+		.message = caption,
+		.media = std::move(media),
+	};
+
+	const auto layerData = LayerCodec::SerializeLayer(
+		secret->layer(),
+		secret->inSeqNo(),
+		secret->outSeqNo(),
+		msg);
+
+	const auto packet = Crypto::EncryptPacket(
+		secret->keyFingerprint(),
+		secret->authKey(),
+		layerData,
+		secret->isCreator());
+
+	secret->advanceOutSeqNo();
+	saveSessionToDb(secret);
+
+	const auto textToStore = caption.isEmpty()
+		? (msg.media->type == MediaType::Photo ? u"[Photo]"_q : msg.media->fileName)
+		: caption;
+	saveMessageToDb(
+		chatId,
+		randomId,
+		_session->userId().bare,
+		base::unixtime::now(),
+		textToStore,
+		secret->ttl());
+
+	const auto inputChat = MTP_inputEncryptedChat(
+		MTP_int(secret->chatId()),
+		MTP_long(secret->accessHash()));
+
+	_session->api().request(MTPmessages_SendEncrypted(
+		MTP_flags(0),
+		inputChat,
+		MTP_long(randomId),
+		MTP_bytes(packet)
+	)).send();
+}
 
 void Manager::setChatTtl(int32 chatId, int32 ttl) {
 	const auto secret = chat(chatId);
@@ -359,20 +434,29 @@ void Manager::handleUpdateNewEncryptedMessage(const MTPDupdateNewEncryptedMessag
 		if (layer->message.has_value()) {
 			const auto &m = *layer->message;
 			const auto effectiveRandomId = m.randomId ? m.randomId : randomId;
+			QString displayMsg = m.message;
+			if (m.media.has_value()) {
+				const auto &med = *m.media;
+				if (displayMsg.isEmpty()) {
+					displayMsg = (med.type == MediaType::Photo)
+						? u"[Photo]"_q
+						: (!med.fileName.isEmpty() ? med.fileName : u"[Document]"_q);
+				}
+			}
 			saveSessionToDb(secret);
 			saveMessageToDb(
 				chatId,
 				effectiveRandomId,
 				secret->partnerId().bare,
 				date,
-				m.message,
+				displayMsg,
 				m.ttl);
 			const auto partnerUser = _session->data().user(secret->partnerId());
 			insertLocalMessage(
 				partnerUser,
 				_session->data().nextLocalMessageId(),
 				date,
-				m.message,
+				displayMsg,
 				false,
 				m.ttl);
 			_messageReceived.fire(IncomingSecretMessage{

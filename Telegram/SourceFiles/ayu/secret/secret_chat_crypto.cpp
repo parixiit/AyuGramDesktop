@@ -194,4 +194,60 @@ std::optional<DecryptedPacket> Crypto::DecryptPacket(
 	};
 }
 
+
+EncryptedFilePayload Crypto::EncryptFilePayload(bytes::const_span fileBytes) {
+	auto key = bytes::vector(32, gsl::byte{});
+	auto iv = bytes::vector(32, gsl::byte{});
+	bytes::set_random(key);
+	bytes::set_random(iv);
+
+	const auto unpadded = fileBytes.size();
+	const auto padding = (16 - (unpadded % 16)) % 16;
+	const auto totalLen = unpadded + padding;
+
+	auto padded = bytes::vector(totalLen, gsl::byte{});
+	bytes::copy(gsl::make_span(padded).subspan(0, unpadded), fileBytes);
+	if (padding > 0) {
+		bytes::set_random(gsl::make_span(padded).subspan(unpadded, padding));
+	}
+
+	auto ciphertext = bytes::vector(totalLen, gsl::byte{});
+	aesIgeEncryptRaw(
+		padded.data(),
+		ciphertext.data(),
+		totalLen,
+		key.data(),
+		iv.data());
+
+	const auto sha1 = openssl::Sha1(key);
+	const auto fp = gsl::to_integer<int32>(sha1[0])
+		| (gsl::to_integer<int32>(sha1[1]) << 8)
+		| (gsl::to_integer<int32>(sha1[2]) << 16)
+		| (gsl::to_integer<int32>(sha1[3]) << 24);
+
+	return EncryptedFilePayload{
+		.ciphertext = std::move(ciphertext),
+		.key = std::move(key),
+		.iv = std::move(iv),
+		.fingerprint = fp,
+	};
+}
+
+bytes::vector Crypto::DecryptFilePayload(
+		bytes::const_span ciphertext,
+		bytes::const_span key,
+		bytes::const_span iv) {
+	if (ciphertext.size() % 16 != 0 || key.size() != 32 || iv.size() != 32) {
+		return {};
+	}
+	auto plaintext = bytes::vector(ciphertext.size(), gsl::byte{});
+	aesIgeDecryptRaw(
+		ciphertext.data(),
+		plaintext.data(),
+		ciphertext.size(),
+		key.data(),
+		iv.data());
+	return plaintext;
+}
+
 } // namespace Ayu::Secret

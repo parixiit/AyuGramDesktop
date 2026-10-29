@@ -31,6 +31,13 @@ struct DecryptedPacket {
 	bytes::vector plaintext;
 };
 
+struct EncryptedFilePayload {
+	bytes::vector ciphertext;
+	bytes::vector key;
+	bytes::vector iv;
+	int32 fingerprint = 0;
+};
+
 class Crypto final {
 public:
 	// Verify prime p and generator g
@@ -66,6 +73,15 @@ public:
 		bytes::const_span authKey,
 		bytes::const_span packet,
 		bool isCreator);
+
+	// Encrypt raw file bytes for encryptedFile transmission
+	[[nodiscard]] static EncryptedFilePayload EncryptFilePayload(bytes::const_span fileBytes);
+
+	// Decrypt raw file bytes from encryptedFile
+	[[nodiscard]] static bytes::vector DecryptFilePayload(
+		bytes::const_span ciphertext,
+		bytes::const_span key,
+		bytes::const_span iv);
 
 };
 
