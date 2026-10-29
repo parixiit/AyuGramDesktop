@@ -241,7 +241,7 @@ void PowerSavingSection::setupContent() {
 		PowerSaving::kAll & ~PowerSaving::Current(),
 		state->forceDisabledMessage.value());
 
-	changes | rpl::on_next([=, collect = getResult](auto&&) {
+	std::move(changes) | rpl::on_next([=, collect = getResult](auto&&) {
 		const auto ignore = Core::App().settings().ignoreBatterySaving();
 		const auto batterySaving = Core::App().batterySaving().enabled();
 		if (ignore || !batterySaving.value_or(false)) {
