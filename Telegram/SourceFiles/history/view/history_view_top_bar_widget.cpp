@@ -7,6 +7,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/history_view_top_bar_widget.h"
 
+#include "ayu/secret/secret_chat_manager.h"
+#include "styles/style_menu_icons.h"
+
 #include "history/history.h"
 #include "history/view/history_view_send_action.h"
 #include "boxes/add_contact_box.h"
@@ -737,6 +740,15 @@ void TopBarWidget::paintTopBar(Painter &p) {
 				Window::GifPauseReason::Any),
 		});
 		namewidth -= badgeWidth;
+
+		if (const auto user = namePeer->asUser()) {
+			if (user->session().secretChats().chatForUser(user->id)) {
+				const auto lockIcon = &st::menuIconLock;
+				lockIcon->paint(p, nameleft, nametop + (st::msgNameStyle.font->height - lockIcon->height()) / 2, width());
+				nameleft += lockIcon->width() + st::dialogsChatTypeSkip;
+				namewidth -= lockIcon->width() + st::dialogsChatTypeSkip;
+			}
+		}
 
 		p.setPen(st::dialogsNameFg);
 		_title.draw(p, {

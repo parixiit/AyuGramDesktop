@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "apiwrap.h"
 
+#include "ayu/secret/secret_chat_manager.h"
+
 #include "api/api_authorizations.h"
 #include "api/api_attached_stickers.h"
 #include "api/api_blocked_peers.h"
@@ -4844,6 +4846,16 @@ void ApiWrap::sendMessage(
 		auto randomId = base::RandomValue<uint64>();
 
 		TextUtilities::Trim(sending);
+
+		if (const auto user = peer->asUser()) {
+			if (const auto secret = _session->secretChats().chatForUser(user->id)) {
+				if (secret->state() == Ayu::Secret::State::Ready) {
+					_session->secretChats().sendMessage(secret->chatId(), sending.text);
+					isFirst = false;
+					continue;
+				}
+			}
+		}
 
 		_session->data().registerMessageRandomId(randomId, newId);
 		_session->data().registerMessageSentData(

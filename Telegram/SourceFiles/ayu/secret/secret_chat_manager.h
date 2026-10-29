@@ -24,6 +24,7 @@ class Session;
 } // namespace Main
 
 class UserData;
+class PeerData;
 
 namespace Ayu::Secret {
 
@@ -72,6 +73,13 @@ private:
 		uint64 senderId,
 		TimeId date,
 		const QString &text,
+		int32 ttl);
+	void insertLocalMessage(
+		not_null<PeerData*> partnerPeer,
+		MsgId msgId,
+		TimeId date,
+		const QString &text,
+		bool isOut,
 		int32 ttl);
 
 	const not_null<Main::Session*> _session;

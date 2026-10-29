@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "dialogs/ui/dialogs_layout.h"
 
+#include "ayu/secret/secret_chat_manager.h"
+
 #include "base/options.h"
 #include "base/unixtime.h"
 #include "core/ui_integration.h"
@@ -1113,6 +1115,12 @@ const style::icon *ChatTypeIcon(
 		not_null<PeerData*> peer,
 		const PaintContext &context) {
 	if (const auto user = peer->asUser()) {
+		if (user->session().secretChats().chatForUser(user->id)) {
+			return &ThreeStateIcon(
+				st::dialogsLockIcon,
+				context.active,
+				context.selected);
+		}
 		if (ShowUserBotIcon(user)) {
 			return &ThreeStateIcon(
 				st::dialogsBotIcon,

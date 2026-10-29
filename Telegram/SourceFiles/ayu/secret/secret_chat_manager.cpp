@@ -11,6 +11,9 @@
 #include "ayu/data/ayu_database.h"
 #include "ayu/data/entities.h"
 #include "base/unixtime.h"
+#include "data/data_session.h"
+#include "data/data_peer_id.h"
+#include "history/history.h"
 
 #include "apiwrap.h"
 #include "base/random.h"
@@ -214,6 +217,14 @@ void Manager::sendMessage(int32 chatId, const QString &text, int32 ttl) {
 		base::unixtime::now(),
 		text,
 		messageTtl);
+	const auto partnerUser = _session->data().user(secret->partnerId());
+	insertLocalMessage(
+		partnerUser,
+		_session->data().nextLocalMessageId(),
+		base::unixtime::now(),
+		text,
+		true,
+		messageTtl);
 
 	const auto inputChat = MTP_inputEncryptedChat(
 		MTP_int(secret->chatId()),
@@ -356,6 +367,14 @@ void Manager::handleUpdateNewEncryptedMessage(const MTPDupdateNewEncryptedMessag
 				date,
 				m.message,
 				m.ttl);
+			const auto partnerUser = _session->data().user(secret->partnerId());
+			insertLocalMessage(
+				partnerUser,
+				_session->data().nextLocalMessageId(),
+				date,
+				m.message,
+				false,
+				m.ttl);
 			_messageReceived.fire(IncomingSecretMessage{
 				.chatId = chatId,
 				.randomId = effectiveRandomId,
@@ -408,6 +427,19 @@ void Manager::loadSessionsFromDb() {
 		chat->setLayer(s.layer);
 		chat->setTtl(s.ttl);
 		_chats[s.chatId] = chat;
+
+		const auto messages = AyuDatabase::getSecretChatMessages(s.chatId, 50);
+		const auto partnerUser = _session->data().user(s.partnerId);
+		for (const auto &msg : messages) {
+			const auto isOut = (msg.senderId == _session->userId().bare);
+			insertLocalMessage(
+				partnerUser,
+				_session->data().nextLocalMessageId(),
+				msg.date,
+				QString::fromStdString(msg.text),
+				isOut,
+				msg.ttl);
+		}
 	}
 }
 
@@ -451,6 +483,70 @@ void Manager::saveMessageToDb(
 	m.inSeqNo = 0;
 	m.outSeqNo = 0;
 	AyuDatabase::saveSecretChatMessage(m);
+}
+
+
+void Manager::insertLocalMessage(
+		not_null<PeerData*> partnerPeer,
+		MsgId msgId,
+		TimeId date,
+		const QString &text,
+		bool isOut,
+		int32 ttl) {
+	const auto history = _session->data().history(partnerPeer);
+
+	using Flag = MTPDmessage::Flag;
+	auto flags = Flag::f_from_id;
+	if (isOut) {
+		flags |= Flag::f_out;
+	}
+	if (ttl > 0) {
+		flags |= Flag::f_ttl_period;
+	}
+
+	const auto fromPeer = isOut ? _session->user() : partnerPeer;
+	const auto mtpMsg = MTP_message(
+		MTP_flags(flags),
+		MTP_int(msgId.bare),
+		peerToMTP(fromPeer->id),
+		MTPint(),
+		MTPstring(),
+		peerToMTP(partnerPeer->id),
+		MTPPeer(),
+		MTPMessageFwdHeader(),
+		MTPlong(),
+		MTPlong(),
+		MTPPeer(),
+		MTPMessageReplyHeader(),
+		MTP_int(date ? date : base::unixtime::now()),
+		MTP_string(text),
+		MTPMessageMedia(),
+		MTPReplyMarkup(),
+		MTPVector<MTPMessageEntity>(),
+		MTPint(),
+		MTPint(),
+		MTPMessageReplies(),
+		MTPint(),
+		MTPstring(),
+		MTPlong(),
+		MTPMessageReactions(),
+		MTPVector<MTPRestrictionReason>(),
+		(ttl > 0 ? MTP_int(ttl) : MTPint()),
+		MTPint(),
+		MTPlong(),
+		MTPFactCheck(),
+		MTPint(),
+		MTPlong(),
+		MTPSuggestedPost(),
+		MTPint(),
+		MTPstring(),
+		MTPRichMessage());
+
+	history->addNewMessage(
+		msgId,
+		mtpMsg,
+		MessageFlag::HasFromId | (isOut ? MessageFlag::Outgoing : MessageFlag(0)),
+		isOut ? NewMessageType::Existing : NewMessageType::Unread);
 }
 
 } // namespace Ayu::Secret
