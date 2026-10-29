@@ -240,7 +240,7 @@ void PowerSavingSection::setupContent() {
 		PowerSaving::kAll & ~PowerSaving::Current(),
 		state->forceDisabledMessage.value());
 
-	changes | rpl::on_next([=, collect = getResult] {
+	changes | rpl::on_next([=, collect = getResult](auto&&) {
 		const auto ignore = Core::App().settings().ignoreBatterySaving();
 		const auto batterySaving = Core::App().batterySaving().enabled();
 		if (ignore || !batterySaving.value_or(false)) {
@@ -253,14 +253,7 @@ void PowerSavingSection::setupContent() {
 
 	if (batterySaving.has_value()) {
 		Ui::AddSkip(content, 6);
-		const auto line = content->add(object_ptr<Ui::RpWidget>(content));
-		line->resize(line->width(), 1);
-		line->paintRequest() | rpl::on_next([=](QRect clip) {
-			Painter p(line);
-			auto color = st::windowFg->c;
-			color.setAlphaF(0.08);
-			p.fillRect(QRect(16, 0, line->width() - 32, 1), color);
-		}, line->lifetime());
+		Ui::AddDivider(content);
 		Ui::AddSkip(content, 6);
 
 		const auto automatic = content->add(object_ptr<Ui::SettingsButton>(
