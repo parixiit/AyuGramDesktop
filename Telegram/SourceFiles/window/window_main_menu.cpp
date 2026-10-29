@@ -26,6 +26,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_folder.h"
 #include "data/data_group_call.h"
 #include "data/data_session.h"
+#include "data/data_thread.h"
+#include "data/data_peer.h"
 #include "data/data_stories.h"
 #include "data/data_user.h"
 #include "info/info_memento.h"
@@ -749,7 +751,7 @@ void MainMenu::setupMenu() {
 		});
 
 		addAction(
-			u"New Secret Chat"_q,
+			rpl::single(u"New Secret Chat"_q),
 			{ &st::menuIconLock }
 		)->setClickedCallback([=] {
 			Window::ShowChooseRecipientBox(
