@@ -8,6 +8,8 @@
  */
 #include "ayu/ui/text_selection_flyout.h"
 
+#include "base/event_filter.h"
+
 #include "ayu/ayu_settings.h"
 #include "lang/lang_keys.h"
 #include "ui/painter.h"
@@ -17,6 +19,7 @@
 #include "styles/style_window.h"
 
 #include <QtGui/QKeyEvent>
+#include <QtGui/QMouseEvent>
 #include <QtGui/QTextCursor>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QTextEdit>
@@ -79,6 +82,33 @@ TextSelectionFlyout::TextSelectionFlyout(
 			});
 		}
 	}, lifetime());
+
+	_field->menuShownValue(
+	) | rpl::on_next([=](bool shown) {
+		if (shown) {
+			hideFast();
+		}
+	}, lifetime());
+
+	_field->addContextMenuHook([=](const Ui::InputField::ContextMenuRequest &) {
+		hideFast();
+	});
+
+	const auto filter = [=](not_null<QEvent*> e) {
+		if (e->type() == QEvent::ContextMenu) {
+			hideFast();
+		} else if (e->type() == QEvent::MouseButtonPress) {
+			if (static_cast<QMouseEvent*>(e.get())->button() == Qt::RightButton) {
+				hideFast();
+			}
+		}
+		return base::EventFilterResult::Continue;
+	};
+	base::install_event_filter(this, raw, filter);
+	if (raw->viewport()) {
+		base::install_event_filter(this, raw->viewport(), filter);
+	}
+	base::install_event_filter(this, _field, filter);
 }
 
 TextSelectionFlyout::~TextSelectionFlyout() = default;
@@ -209,7 +239,7 @@ void TextSelectionFlyout::executeButton(ButtonType type) {
 }
 
 void TextSelectionFlyout::updateState() {
-	if (!AyuSettings::getInstance().textSelectionFlyout()) {
+	if (!AyuSettings::getInstance().textSelectionFlyout() || _field->menuShown()) {
 		hideFast();
 		return;
 	}

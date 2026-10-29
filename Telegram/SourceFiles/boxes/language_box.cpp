@@ -19,6 +19,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "main/main_session.h"
 #include "platform/platform_translate_provider.h"
 #include "settings/settings_common.h"
+#include "settings/settings_common_session.h"
 #include "spellcheck/spellcheck_types.h"
 #include "storage/localstorage.h"
 #include "ui/accessible/ui_accessible_item.h"
@@ -1691,3 +1692,132 @@ base::binary_guard LanguageBox::Show(
 
 	return result;
 }
+
+namespace Settings {
+
+class LanguageSection : public Section<LanguageSection> {
+public:
+	LanguageSection(
+		QWidget *parent,
+		not_null<Window::SessionController*> controller);
+
+	[[nodiscard]] rpl::producer<QString> title() override;
+
+private:
+	void setupContent();
+
+};
+
+LanguageSection::LanguageSection(
+	QWidget *parent,
+	not_null<Window::SessionController*> controller)
+: Section(parent, controller) {
+	setupContent();
+}
+
+rpl::producer<QString> LanguageSection::title() {
+	return tr::lng_settings_language();
+}
+
+void LanguageSection::setupContent() {
+	const auto content = Ui::CreateChild<Ui::VerticalLayout>(this);
+
+	Ui::AddSkip(content, 14);
+
+	const auto translateEnabled = content->add(
+		object_ptr<Ui::SettingsButton>(
+			content,
+			tr::lng_translate_settings_show(),
+			st::settingsButtonNoIcon))->toggleOn(
+				rpl::single(Core::App().settings().translateButtonEnabled()));
+
+	translateEnabled->toggledValue(
+	) | rpl::filter([](bool checked) {
+		return (checked != Core::App().settings().translateButtonEnabled());
+	}) | rpl::on_next([=](bool checked) {
+		Core::App().settings().setTranslateButtonEnabled(checked);
+		Core::App().saveSettingsDelayed();
+	}, translateEnabled->lifetime());
+
+	using namespace rpl::mappers;
+	const auto translateChat = content->add(object_ptr<Ui::SettingsButton>(
+		content,
+		tr::lng_translate_settings_chat(),
+		st::settingsButtonNoIconLocked
+	))->toggleOn(Core::App().settings().translateChatEnabledValue());
+
+	translateChat->toggledValue(
+	) | rpl::filter([](bool checked) {
+		return checked != Core::App().settings().translateChatEnabled();
+	}) | rpl::on_next([=](bool checked) {
+		Core::App().settings().setTranslateChatEnabled(checked);
+		Core::App().saveSettingsDelayed();
+	}, translateChat->lifetime());
+
+	using Languages = std::vector<LanguageId>;
+	const auto translateSkipWrap = content->add(
+		object_ptr<Ui::SlideWrap<Ui::VerticalLayout>>(
+			content,
+			object_ptr<Ui::VerticalLayout>(content)));
+	translateSkipWrap->toggle(
+		translateEnabled->toggled(),
+		anim::type::instant);
+	translateSkipWrap->toggleOn(rpl::combine(
+		translateEnabled->toggledValue(),
+		translateChat->toggledValue(),
+		rpl::mappers::_1 || rpl::mappers::_2));
+	const auto translateSkip = Settings::AddButtonWithLabel(
+		translateSkipWrap->entity(),
+		tr::lng_translate_settings_choose(),
+		Core::App().settings().skipTranslationLanguagesValue(
+		) | rpl::map([](const Languages &list) {
+			return (list.size() > 1)
+				? tr::lng_languages_count(tr::now, lt_count, list.size())
+				: Ui::LanguageName(list.front());
+		}),
+		st::settingsButtonNoIcon);
+
+	translateSkip->setClickedCallback([=] {
+		controller()->uiShow()->showBox(Ui::EditSkipTranslationLanguages());
+	});
+
+	Ui::AddSkip(content);
+	Ui::AddDividerText(content, tr::lng_translate_settings_about());
+
+	Ui::AddSkip(content, 6);
+	const auto line = content->add(object_ptr<Ui::RpWidget>(content));
+	line->resize(line->width(), 1);
+	line->paintRequest() | rpl::on_next([=](QRect clip) {
+		Painter p(line);
+		auto color = st::windowFg->c;
+		color.setAlphaF(0.08);
+		p.fillRect(QRect(16, 0, line->width() - 32, 1), color);
+	}, line->lifetime());
+	Ui::AddSkip(content, 6);
+
+	Ui::AddSubsectionTitle(content, tr::lng_languages());
+
+	const auto &[recent, official] = PrepareLists();
+	const auto inner = content->add(
+		object_ptr<Content>(content, recent, official));
+
+	inner->activations(
+	) | rpl::on_next([=](const Language &language) {
+		const auto currentId = [] {
+			return Lang::LanguageIdOrDefault(Lang::Id());
+		};
+		if (language.id != currentId()) {
+			Lang::CurrentCloudManager().switchToLanguage(language);
+			inner->changeChosen(currentId());
+		}
+	}, inner->lifetime());
+
+	Ui::AddSkip(content, 14);
+	Ui::ResizeFitChild(this, content);
+}
+
+Type LanguageId() {
+	return LanguageSection::Id();
+}
+
+} // namespace Settings

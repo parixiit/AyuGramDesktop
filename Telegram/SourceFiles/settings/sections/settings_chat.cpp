@@ -415,7 +415,9 @@ void ColorsPalette::updateInnerGeometry() {
 	if (width < size * count) {
 		return;
 	}
-	const auto skip = (width - size * count) / float64(count - 1);
+	const auto maxSkip = 12.0;
+	const auto naturalSkip = (width - size * count) / float64(count - 1);
+	const auto skip = std::min(naturalSkip, maxSkip);
 	const auto y = st::defaultVerticalListSkip * 2;
 	auto x = float64(padding.left());
 	for (const auto &button : _buttons) {
@@ -2637,6 +2639,7 @@ void SetupDefaultThemes(
 			button->moveToLeft(int(base::SafeRound(left)), 0);
 			left += button->width() + skip;
 		}
+		block->resize(block->width(), buttons[0]->height());
 	}, block->lifetime());
 
 	if (AyuFeatures::MessageShot::isChoosingTheme()) {
@@ -2729,6 +2732,8 @@ void SetupCloudThemes(
 		HighlightRegistry *highlights) {
 	using namespace Window::Theme;
 	using namespace rpl::mappers;
+
+	controller->session().data().cloudThemes().refresh();
 
 	const auto wrap = container->add(
 		object_ptr<Ui::SlideWrap<Ui::VerticalLayout>>(

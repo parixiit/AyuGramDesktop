@@ -12,12 +12,19 @@
 #include "ui/widgets/scroll_area.h"
 #include "settings/settings_type.h"
 
+#include <memory>
 #include <vector>
 
 class UserData;
 
+namespace Info::Profile {
+class Badge;
+class EmojiStatusPanel;
+} // namespace Info::Profile
+
 namespace Ui {
 class FlatLabel;
+class InputField;
 class IconButton;
 class UserpicButton;
 class VerticalLayout;
@@ -48,8 +55,10 @@ protected:
 private:
 	void setupTopBar();
 	void setupProfileCover();
+	void setupSearchBar();
 	void setupCategories();
 	void setActiveButton(NavButton *button);
+	void updateCoverGeometry(int newWidth);
 
 	const not_null<Window::SessionController*> _controller;
 	not_null<UserData*> _user;
@@ -64,6 +73,11 @@ private:
 	object_ptr<Ui::FlatLabel> _name = { nullptr };
 	object_ptr<Ui::FlatLabel> _status = { nullptr };
 	object_ptr<Ui::IconButton> _qrButton = { nullptr };
+	std::unique_ptr<Info::Profile::EmojiStatusPanel> _emojiStatusPanel;
+	std::unique_ptr<Info::Profile::Badge> _badge;
+
+	object_ptr<Ui::RpWidget> _searchWrap = { nullptr };
+	Ui::InputField *_searchField = nullptr;
 
 	object_ptr<Ui::ScrollArea> _scroll = { nullptr };
 	Ui::VerticalLayout *_content = nullptr;

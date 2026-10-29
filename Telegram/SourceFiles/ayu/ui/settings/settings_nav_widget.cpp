@@ -9,6 +9,8 @@
 #include "ayu/ui/settings/settings_nav_widget.h"
 
 #include "ayu/ui/settings/settings_main.h"
+#include "info/profile/info_profile_badge.h"
+#include "info/profile/info_profile_emoji_status_panel.h"
 #include "boxes/language_box.h"
 #include "data/data_changes.h"
 #include "data/data_user.h"
@@ -25,6 +27,7 @@
 #include "settings/sections/settings_premium.h"
 #include "settings/sections/settings_privacy_security.h"
 #include "settings/settings_power_saving.h"
+#include "settings/settings_search.h"
 #include "ui/boxes/peer_qr_box.h"
 #include "ui/controls/userpic_button.h"
 #include "ui/layers/generic_box.h"
@@ -34,6 +37,7 @@
 #include "ui/vertical_list.h"
 #include "ui/widgets/buttons.h"
 #include "ui/widgets/labels.h"
+#include "ui/widgets/fields/input_field.h"
 #include "ui/widgets/scroll_area.h"
 #include "ui/wrap/vertical_layout.h"
 #include "window/window_session_controller.h"
@@ -42,6 +46,7 @@
 #include "styles/style_layers.h"
 #include "styles/style_menu_icons.h"
 #include "styles/style_settings.h"
+#include "styles/style_dialogs.h"
 #include "styles/style_window.h"
 
 namespace Ayu {
@@ -83,7 +88,7 @@ NavButton::NavButton(
 : RippleButton(parent, st::defaultRippleAnimation)
 , _icon(icon)
 , _text(text) {
-	resize(width(), 42);
+	resize(width(), 40);
 	setClickedCallback(std::move(onClick));
 }
 
@@ -99,39 +104,61 @@ void NavButton::onStateChanged(State was, StateChangeSource source) {
 	update();
 }
 
+class NavSeparator final : public Ui::RpWidget {
+public:
+	NavSeparator(QWidget *parent, int marginX = 16, int marginY = 4)
+	: RpWidget(parent)
+	, _marginX(marginX)
+	, _marginY(marginY) {
+		resize(width(), _marginY * 2 + 1);
+	}
+protected:
+	void paintEvent(QPaintEvent *e) override {
+		Painter p(this);
+		auto color = st::windowFg->c;
+		color.setAlphaF(0.08);
+		p.fillRect(QRect(_marginX, _marginY, width() - 2 * _marginX, 1), color);
+	}
+private:
+	int _marginX;
+	int _marginY;
+};
+
 void NavButton::paintEvent(QPaintEvent *e) {
 	Painter p(this);
 
-	const auto r = rect().marginsRemoved({ 8, 2, 8, 2 });
+	const auto r = rect().marginsRemoved({ 6, 2, 6, 2 });
 	if (_active || isOver()) {
 		p.setPen(Qt::NoPen);
 		p.setBrush(st::windowBgOver);
-		p.drawRoundedRect(r, 6, 6);
+		p.drawRoundedRect(r, 4, 4);
 	}
 
 	paintRipple(p, 0, 0);
 
 	if (_active) {
-		// Modern selection indicator
 		p.setPen(Qt::NoPen);
 		p.setBrush(st::windowBgActive);
-		const auto pillHeight = 18;
+		const auto pillHeight = 16;
 		const auto pillY = (height() - pillHeight) / 2;
-		p.drawRoundedRect(QRect(11, pillY, 3, pillHeight), 1.5, 1.5);
+		p.drawRoundedRect(QRect(9, pillY, 3, pillHeight), 1.5, 1.5);
 	}
+
+	const auto softFg = anim::color(st::windowFg->c, st::windowSubTextFg->c, 0.20);
+	const auto fg = _active
+		? st::windowBgActive->c
+		: isOver()
+		? st::windowFg->c
+		: softFg;
 
 	if (_icon) {
 		const auto iconX = 22;
 		const auto iconY = (height() - _icon->height()) / 2;
-		if (_active) {
-			_icon->paint(p, QPoint(iconX, iconY), width(), st::windowBgActive->c);
-		} else {
-			_icon->paint(p, QPoint(iconX, iconY), width());
-		}
+		_icon->paint(p, QPoint(iconX, iconY), width(), fg);
 	}
 
-	p.setFont(st::semiboldFont);
-	p.setPen(_active ? st::windowBgActive : st::windowFg);
+	p.setFont(st::defaultFont);
+	p.setPen(fg);
 	const auto textX = 54;
 	const auto textW = width() - textX - 16;
 	p.drawText(
@@ -151,14 +178,18 @@ SettingsNavWidget::SettingsNavWidget(
 
 	setupTopBar();
 	setupProfileCover();
+	setupSearchBar();
 	setupCategories();
 
 	_controller->session().changes().peerUpdates(
 		_user,
-		Data::PeerUpdate::Flag::Photo | Data::PeerUpdate::Flag::Name
+		Data::PeerUpdate::Flag::Photo
+		| Data::PeerUpdate::Flag::Name
+		| Data::PeerUpdate::Flag::EmojiStatus
 	) | rpl::on_next([=] {
 		if (_name) {
 			_name->setText(_user->name());
+			updateCoverGeometry(width());
 		}
 		update();
 	}, lifetime());
@@ -219,6 +250,96 @@ void SettingsNavWidget::setupProfileCover() {
 	_qrButton->setClickedCallback([=, show = _controller->uiShow()] {
 		Ui::DefaultShowFillPeerQrBoxCallback(show, _user);
 	});
+
+	_emojiStatusPanel = std::make_unique<Info::Profile::EmojiStatusPanel>();
+	_badge = std::make_unique<Info::Profile::Badge>(
+		_cover.data(),
+		st::settingsCoverBadge,
+		&_controller->session(),
+		Info::Profile::BadgeContentForPeer(_user),
+		_emojiStatusPanel.get(),
+		[=] {
+			return _controller->isGifPausedAtLeastFor(
+				Window::GifPauseReason::Layer);
+		},
+		0,
+		Info::Profile::BadgeType::Premium | Info::Profile::BadgeType::Verified);
+
+	_badge->setPremiumClickCallback([=] {
+		if (const auto widget = _badge->widget()) {
+			_emojiStatusPanel->show(
+				_controller,
+				widget,
+				_badge->sizeTag());
+		}
+	});
+
+	_badge->updated() | rpl::on_next([=] {
+		updateCoverGeometry(width());
+	}, lifetime());
+
+	updateCoverGeometry(width());
+}
+
+void SettingsNavWidget::updateCoverGeometry(int newWidth) {
+	if (!_cover || !_name) {
+		return;
+	}
+	const auto nameLeft = 78;
+	const auto nameTop = 13;
+	const auto qrWidth = (_qrButton && !_qrButton->isHidden())
+		? (_qrButton->width() + 16)
+		: 0;
+	auto nameWidth = newWidth - nameLeft - 16 - qrWidth;
+	if (const auto badgeWidget = _badge ? _badge->widget() : nullptr) {
+		nameWidth -= st::infoVerifiedCheckPosition.x() + badgeWidget->width();
+	}
+	nameWidth = std::max(0, nameWidth);
+
+	_name->resizeToNaturalWidth(nameWidth);
+	_name->moveToLeft(nameLeft, nameTop, newWidth);
+
+	if (_badge && _badge->widget()) {
+		const auto badgeLeft = nameLeft + _name->width();
+		const auto badgeTop = nameTop;
+		const auto badgeBottom = nameTop + _name->height();
+		_badge->move(badgeLeft, badgeTop, badgeBottom);
+	}
+	if (_status) {
+		_status->resizeToWidth(std::max(0, newWidth - nameLeft - 16 - qrWidth));
+	}
+	if (_qrButton) {
+		_qrButton->moveToRight(16, 16);
+	}
+}
+
+void SettingsNavWidget::setupSearchBar() {
+	_searchWrap.create(this);
+	_searchWrap->resize(width(), 44);
+
+	_searchField = Ui::CreateChild<Ui::InputField>(
+		_searchWrap.data(),
+		st::dialogsFilter,
+		rpl::single(u"Search Settings"_q));
+
+	_searchField->changes(
+	) | rpl::on_next([=] {
+		const auto query = _searchField->getLastText();
+		if (!query.isEmpty()) {
+			_controller->showSettings(
+				::Settings::Search::Id(),
+				Window::SectionShow::Way::ClearStack);
+		}
+	}, _searchField->lifetime());
+
+	_searchField->focusedChanges(
+	) | rpl::on_next([=](bool focused) {
+		if (focused) {
+			_controller->showSettings(
+				::Settings::Search::Id(),
+				Window::SectionShow::Way::ClearStack);
+		}
+	}, _searchField->lifetime());
 }
 
 void SettingsNavWidget::setupCategories() {
@@ -235,6 +356,9 @@ void SettingsNavWidget::setupCategories() {
 			icon,
 			text,
 			[=] {
+				if (_activeButton == btn) {
+					return;
+				}
 				setActiveType(type);
 				_controller->showSettings(
 					type,
@@ -286,14 +410,10 @@ void SettingsNavWidget::setupCategories() {
 		&st::menuIconStats,
 		tr::lng_local_storage_title(tr::now),
 		Settings::LocalStorageId());
-	addAction(
+	addCategory(
 		&st::menuIconPowerUsage,
 		tr::lng_settings_power_menu(tr::now),
-		[=] {
-			_controller->show(Box(
-				::Settings::PowerSavingBox,
-				PowerSaving::Flags()));
-		});
+		Settings::PowerSavingId());
 	addCategory(
 		&st::menuIconShowInFolder,
 		tr::lng_settings_section_filters(tr::now),
@@ -302,25 +422,24 @@ void SettingsNavWidget::setupCategories() {
 		&st::menuIconUnmute,
 		tr::lng_settings_section_devices(tr::now),
 		Settings::SessionsId());
-	addAction(
+	addCategory(
 		&st::menuIconTranslate,
 		tr::lng_settings_language(tr::now),
-		[=] {
-			static auto Guard = base::binary_guard();
-			Guard = LanguageBox::Show(_controller);
-		});
+		Settings::LanguageId());
 	addCategory(
 		&st::menuIconSettings,
 		tr::lng_settings_advanced(tr::now),
 		Settings::AdvancedId());
 
-	Ui::AddDivider(_content);
-	Ui::AddSkip(_content, 4);
+	_content->add(object_ptr<NavSeparator>(_content, 16, 4));
 
 	addCategory(
 		&st::menuIconGiftPremium,
 		tr::lng_premium_summary_title(tr::now),
 		Settings::PremiumId());
+
+	_content->add(object_ptr<NavSeparator>(_content, 16, 4));
+
 	addAction(
 		&st::menuIconFaq,
 		tr::lng_settings_faq(tr::now),
@@ -361,23 +480,22 @@ void SettingsNavWidget::resizeEvent(QResizeEvent *e) {
 	RpWidget::resizeEvent(e);
 	const auto topBarHeight = _topBar ? _topBar->height() : 0;
 	const auto coverHeight = _cover ? _cover->height() : 0;
+	const auto searchHeight = _searchWrap ? _searchWrap->height() : 0;
 	if (_topBar) {
 		_topBar->setGeometryToLeft(0, 0, width(), topBarHeight);
 	}
 	if (_cover) {
 		_cover->setGeometryToLeft(0, topBarHeight, width(), coverHeight);
-		if (_name) {
-			_name->resizeToWidth(std::max(0, width() - 78 - 56));
-		}
-		if (_status) {
-			_status->resizeToWidth(std::max(0, width() - 78 - 56));
-		}
-		if (_qrButton) {
-			_qrButton->moveToRight(16, 16);
+		updateCoverGeometry(width());
+	}
+	if (_searchWrap) {
+		_searchWrap->setGeometryToLeft(0, topBarHeight + coverHeight, width(), searchHeight);
+		if (_searchField) {
+			_searchField->setGeometryToLeft(12, 5, width() - 24, 34);
 		}
 	}
 	if (_scroll) {
-		const auto scrollY = topBarHeight + coverHeight;
+		const auto scrollY = topBarHeight + coverHeight + searchHeight;
 		_scroll->setGeometryToLeft(0, scrollY, width(), height() - scrollY);
 		if (_content) {
 			_content->resizeToWidth(width());

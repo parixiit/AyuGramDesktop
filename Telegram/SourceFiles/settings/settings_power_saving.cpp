@@ -17,6 +17,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/power_saving.h"
 #include "ui/vertical_list.h"
 #include "settings/settings_common.h"
+#include "settings/settings_common_session.h"
+#include "window/window_session_controller.h"
 #include "styles/style_menu_icons.h"
 #include "styles/style_layers.h"
 #include "styles/style_settings.h"
@@ -187,6 +189,110 @@ EditFlagsDescriptor<PowerSaving::Flags> PowerSavingLabels() {
 		{ std::nullopt, std::move(calls) },
 		{ std::nullopt, std::move(animations) },
 	}, .st = &st::powerSavingButton };
+}
+
+class PowerSavingSection : public Section<PowerSavingSection> {
+public:
+	PowerSavingSection(
+		QWidget *parent,
+		not_null<Window::SessionController*> controller);
+
+	[[nodiscard]] rpl::producer<QString> title() override;
+
+private:
+	void setupContent();
+
+};
+
+PowerSavingSection::PowerSavingSection(
+	QWidget *parent,
+	not_null<Window::SessionController*> controller)
+: Section(parent, controller) {
+	setupContent();
+}
+
+rpl::producer<QString> PowerSavingSection::title() {
+	return tr::lng_settings_power_title();
+}
+
+void PowerSavingSection::setupContent() {
+	const auto content = Ui::CreateChild<Ui::VerticalLayout>(this);
+
+	const auto ignore = Core::App().settings().ignoreBatterySaving();
+	const auto batterySaving = Core::App().batterySaving().enabled();
+
+	Ui::AddSkip(content, 14);
+	Ui::AddSubsectionTitle(
+		content,
+		tr::lng_settings_power_subtitle(),
+		st::powerSavingSubtitlePadding);
+
+	struct State {
+		rpl::variable<QString> forceDisabledMessage;
+	};
+	const auto state = content->lifetime().make_state<State>();
+	state->forceDisabledMessage = (batterySaving.value_or(false) && !ignore)
+		? tr::lng_settings_power_turn_off(tr::now)
+		: QString();
+
+	auto [checkboxes, getResult, changes, highlightWidget] = CreateEditPowerSaving(
+		content,
+		PowerSaving::kAll & ~PowerSaving::Current(),
+		state->forceDisabledMessage.value());
+
+	changes | rpl::on_next([=, collect = getResult] {
+		const auto ignore = Core::App().settings().ignoreBatterySaving();
+		const auto batterySaving = Core::App().batterySaving().enabled();
+		if (ignore || !batterySaving.value_or(false)) {
+			Set(PowerSaving::kAll & ~collect());
+		}
+		Core::App().saveSettingsDelayed();
+	}, content->lifetime());
+
+	content->add(std::move(checkboxes));
+
+	if (batterySaving.has_value()) {
+		Ui::AddSkip(content, 6);
+		const auto line = content->add(object_ptr<Ui::RpWidget>(content));
+		line->resize(line->width(), 1);
+		line->paintRequest() | rpl::on_next([=](QRect clip) {
+			Painter p(line);
+			auto color = st::windowFg->c;
+			color.setAlphaF(0.08);
+			p.fillRect(QRect(16, 0, line->width() - 32, 1), color);
+		}, line->lifetime());
+		Ui::AddSkip(content, 6);
+
+		const auto automatic = content->add(object_ptr<Ui::SettingsButton>(
+			content,
+			tr::lng_settings_power_auto(),
+			st::powerSavingButtonNoIcon
+		))->toggleOn(rpl::single(!ignore));
+		Ui::AddSkip(content);
+		Ui::AddDividerText(content, tr::lng_settings_power_auto_about());
+
+		automatic->toggledValue(
+		) | rpl::on_next([=](bool toggled) {
+			Core::App().settings().setIgnoreBatterySavingValue(!toggled);
+			Core::App().saveSettingsDelayed();
+		}, automatic->lifetime());
+
+		state->forceDisabledMessage = rpl::combine(
+			automatic->toggledValue(),
+			Core::App().batterySaving().value()
+		) | rpl::map([=](bool dontIgnore, bool saving) {
+			return (saving && dontIgnore)
+				? tr::lng_settings_power_turn_off()
+				: rpl::single(QString());
+		}) | rpl::flatten_latest();
+	}
+
+	Ui::AddSkip(content, 14);
+	Ui::ResizeFitChild(this, content);
+}
+
+Type PowerSavingId() {
+	return PowerSavingSection::Id();
 }
 
 } // namespace Settings

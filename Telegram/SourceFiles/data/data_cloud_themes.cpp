@@ -249,6 +249,8 @@ CloudThemes::CloudThemes(not_null<Main::Session*> session)
 void CloudThemes::setupReload() {
 	using namespace Window::Theme;
 
+	loadPrebuiltThemes();
+
 	if (needReload()) {
 		_reloadCurrentTimer.callOnce(kFirstReloadTimeout);
 	} else if (!Background()->themeObject().cloud.emoticon.isEmpty()) {
@@ -480,6 +482,7 @@ void CloudThemes::scheduleReload() {
 }
 
 void CloudThemes::refresh() {
+	loadPrebuiltThemes();
 	if (_refreshRequestId) {
 		return;
 	}
@@ -492,7 +495,8 @@ void CloudThemes::refresh() {
 			_hash = data.vhash().v;
 			parseThemes(data.vthemes().v);
 			_updates.fire({});
-		}, [](const MTPDaccount_themesNotModified &) {
+		}, [=](const MTPDaccount_themesNotModified &) {
+			loadPrebuiltThemes();
 		});
 	}).fail([=] {
 		_refreshRequestId = 0;

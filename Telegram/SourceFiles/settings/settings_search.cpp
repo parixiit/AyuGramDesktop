@@ -137,7 +137,7 @@ Search::Search(
 }
 
 rpl::producer<QString> Search::title() {
-	return tr::lng_dlg_filter();
+	return rpl::single(u"Search Settings"_q);
 }
 
 void Search::setInnerFocus() {
@@ -152,6 +152,7 @@ base::weak_qptr<Ui::RpWidget> Search::createPinnedToTop(
 	_searchController = std::move(search.controller);
 	const auto row = search.row;
 	_searchField = search.field;
+	_searchField->setPlaceholder(rpl::single(u"Search Settings"_q));
 	_searchField->customUpDown(true);
 
 	_searchController->queryChanges() | rpl::on_next([=](QString &&query) {
@@ -198,25 +199,6 @@ void Search::setupContent() {
 	setupCustomizations();
 	buildIndex();
 	rebuildResults(QString());
-
-	controller()->session().faqSuggestions().loadedValue(
-	) | rpl::filter([](bool loaded) {
-		return loaded;
-	}) | rpl::take(1) | rpl::on_next([=] {
-		for (auto i = _faqStartIndex; i < int(_entries.size()); ++i) {
-			const auto it = _buttonCache.find(i);
-			if (it != _buttonCache.end()) {
-				_trackedButtons.remove(it->second);
-				delete it->second;
-				_buttonCache.erase(it);
-			}
-		}
-		buildIndex();
-		const auto query = _searchController
-			? _searchController->query()
-			: QString();
-		rebuildResults(query);
-	}, lifetime());
 
 	Ui::ResizeFitChild(this, content);
 }
@@ -266,21 +248,6 @@ void Search::buildIndex() {
 	}
 
 	_faqStartIndex = int(_entries.size());
-
-	const auto &faq = controller()->session().faqSuggestions();
-	for (const auto &faqEntry : faq.entries()) {
-		auto entry = Builder::SearchEntry{
-			.title = faqEntry.title,
-		};
-		auto indexed = IndexedEntry{
-			.entry = std::move(entry),
-			.terms = TextUtilities::PrepareSearchWords(faqEntry.title),
-			.depth = 1000,
-			.faqUrl = faqEntry.url,
-			.faqSection = faqEntry.section,
-		};
-		_entries.push_back(std::move(indexed));
-	}
 
 	for (auto i = 0; i < int(_entries.size()); ++i) {
 		for (const auto &term : _entries[i].terms) {
@@ -664,47 +631,6 @@ void Search::rebuildRecentResults() {
 }
 
 void Search::rebuildFaqResults() {
-	if (_faqStartIndex >= int(_entries.size())) {
-		return;
-	}
-
-	if (!_visibleButtons.empty()) {
-		Ui::AddSubsectionTitle(_list, tr::lng_settings_faq());
-	}
-
-	const auto faqSubtitle = tr::lng_settings_faq_subtitle(tr::now);
-	const auto weak = base::make_weak(controller());
-
-	for (auto i = _faqStartIndex; i < int(_entries.size()); ++i) {
-		const auto &indexed = _entries[i];
-
-		const auto cached = _buttonCache.find(i);
-		if (cached != _buttonCache.end()) {
-			addButton(cached->second);
-			continue;
-		}
-
-		const auto subtitle = faqSubtitle + u" > "_q + indexed.faqSection;
-		const auto button = CreateSearchResultButtonRaw(
-			this,
-			indexed.entry.title,
-			subtitle,
-			st::settingsSearchResultNoIcon,
-			IconDescriptor{},
-			Builder::SearchEntryCheckIcon::None);
-
-		const auto url = indexed.faqUrl;
-		button->addClickHandler([=] {
-			UrlClickHandler::Open(
-				url,
-				QVariant::fromValue(ClickHandlerContext{
-					.sessionWindow = weak,
-				}));
-		});
-
-		_buttonCache.emplace(i, button);
-		addButton(button);
-	}
 }
 
 void Search::addButton(not_null<Ui::SettingsButton*> button) {
