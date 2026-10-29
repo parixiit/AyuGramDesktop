@@ -8,6 +8,10 @@
  */
 #include "ayu/secret/secret_chat_manager.h"
 
+#include "ayu/data/ayu_database.h"
+#include "ayu/data/entities.h"
+#include "base/unixtime.h"
+
 #include "apiwrap.h"
 #include "base/random.h"
 #include "data/data_user.h"
@@ -18,6 +22,7 @@ namespace Ayu::Secret {
 
 Manager::Manager(not_null<Main::Session*> session)
 : _session(session) {
+	loadSessionsFromDb();
 }
 
 Manager::~Manager() = default;
@@ -142,6 +147,7 @@ void Manager::finishAccept(
 			chat->setAuthKey(std::move(key));
 			chat->setKeyFingerprint(fingerprint);
 			chat->setState(State::Ready);
+			saveSessionToDb(chat);
 			_chatUpdated.fire(chat.get());
 		}, [](const auto &) {
 		});
@@ -155,6 +161,12 @@ void Manager::discardChat(int32 chatId, bool deleteHistory) {
 	}
 	secret->setState(State::Discarded);
 	_chatUpdated.fire(secret.get());
+
+	if (deleteHistory) {
+		AyuDatabase::deleteSecretChatSession(chatId);
+	} else {
+		saveSessionToDb(secret);
+	}
 
 	auto flags = MTPDmessages_discardEncryption::Flags(0);
 	if (deleteHistory) {
@@ -194,6 +206,14 @@ void Manager::sendMessage(int32 chatId, const QString &text, int32 ttl) {
 		secret->isCreator());
 
 	secret->advanceOutSeqNo();
+	saveSessionToDb(secret);
+	saveMessageToDb(
+		chatId,
+		randomId,
+		_session->userId().bare,
+		base::unixtime::now(),
+		text,
+		messageTtl);
 
 	const auto inputChat = MTP_inputEncryptedChat(
 		MTP_int(secret->chatId()),
@@ -245,6 +265,7 @@ void Manager::setChatTtl(int32 chatId, int32 ttl) {
 		MTP_bytes(packet)
 	)).send();
 
+	saveSessionToDb(secret);
 	_chatUpdated.fire(secret.get());
 }
 
@@ -285,6 +306,7 @@ void Manager::handleUpdateEncryption(const MTPDupdateEncryption &update) {
 							secret->setAuthKey(std::move(authKey));
 							secret->setKeyFingerprint(computedFp);
 							secret->setState(State::Ready);
+							saveSessionToDb(secret);
 							_chatUpdated.fire(secret.get());
 						}
 					}
@@ -325,9 +347,18 @@ void Manager::handleUpdateNewEncryptedMessage(const MTPDupdateNewEncryptedMessag
 
 		if (layer->message.has_value()) {
 			const auto &m = *layer->message;
+			const auto effectiveRandomId = m.randomId ? m.randomId : randomId;
+			saveSessionToDb(secret);
+			saveMessageToDb(
+				chatId,
+				effectiveRandomId,
+				secret->partnerId().bare,
+				date,
+				m.message,
+				m.ttl);
 			_messageReceived.fire(IncomingSecretMessage{
 				.chatId = chatId,
-				.randomId = m.randomId ? m.randomId : randomId,
+				.randomId = effectiveRandomId,
 				.date = date,
 				.text = m.message,
 				.ttl = m.ttl,
@@ -357,6 +388,69 @@ void Manager::handleUpdateNewEncryptedMessage(const MTPDupdateNewEncryptedMessag
 			data.vdate().v,
 			bytes::make_span(data.vbytes().v));
 	});
+}
+
+
+void Manager::loadSessionsFromDb() {
+	const auto sessions = AyuDatabase::getSecretChatSessions(_session->userId().bare);
+	for (const auto &s : sessions) {
+		auto chat = std::make_shared<SecretChat>(
+			s.chatId,
+			uint64(s.accessHash),
+			UserId(s.partnerId),
+			s.isCreator);
+		chat->setState(static_cast<State>(s.state));
+		if (!s.authKey.empty()) {
+			auto keyBytes = bytes::make_vector(bytes::make_span(s.authKey));
+			chat->setAuthKey(std::move(keyBytes));
+		}
+		chat->setKeyFingerprint(s.keyFingerprint);
+		chat->setLayer(s.layer);
+		chat->setTtl(s.ttl);
+		_chats[s.chatId] = chat;
+	}
+}
+
+void Manager::saveSessionToDb(const std::shared_ptr<SecretChat> &chat) {
+	if (!chat) {
+		return;
+	}
+	SecretChatSessionEntity entity;
+	entity.chatId = chat->chatId();
+	entity.userId = _session->userId().bare;
+	entity.accessHash = chat->accessHash();
+	entity.partnerId = chat->partnerId().bare;
+	entity.isCreator = chat->isCreator();
+	entity.state = static_cast<int>(chat->state());
+	const auto &key = chat->authKey();
+	entity.authKey = std::vector<char>(key.data(), key.data() + key.size());
+	entity.keyFingerprint = chat->keyFingerprint();
+	entity.inSeqNo = chat->inSeqNo();
+	entity.outSeqNo = chat->outSeqNo();
+	entity.layer = chat->layer();
+	entity.ttl = chat->ttl();
+	entity.createdAt = base::unixtime::now();
+	AyuDatabase::saveSecretChatSession(entity);
+}
+
+void Manager::saveMessageToDb(
+		int32 chatId,
+		uint64 randomId,
+		uint64 senderId,
+		TimeId date,
+		const QString &text,
+		int32 ttl) {
+	SecretChatMessageEntity m;
+	m.chatId = chatId;
+	m.randomId = randomId;
+	m.senderId = senderId;
+	m.date = date;
+	m.text = text.toStdString();
+	m.ttl = ttl;
+	m.destroyAt = (ttl > 0) ? (date + ttl) : 0;
+	m.inSeqNo = 0;
+	m.outSeqNo = 0;
+	AyuDatabase::saveSecretChatMessage(m);
 }
 
 } // namespace Ayu::Secret

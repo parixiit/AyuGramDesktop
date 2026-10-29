@@ -58,4 +58,14 @@ bool hasPerDialogFilters();
 
 void moveCurrentDatabase();
 
+void saveSecretChatSession(const SecretChatSessionEntity &session);
+std::vector<SecretChatSessionEntity> getSecretChatSessions(ID userId);
+std::optional<SecretChatSessionEntity> getSecretChatSession(int chatId);
+void deleteSecretChatSession(int chatId);
+
+void saveSecretChatMessage(const SecretChatMessageEntity &message);
+std::vector<SecretChatMessageEntity> getSecretChatMessages(int chatId, int limit = 100);
+void deleteSecretChatMessage(ID fakeId);
+void clearSecretChatMessages(int chatId);
+
 }

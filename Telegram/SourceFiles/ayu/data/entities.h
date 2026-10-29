@@ -135,3 +135,36 @@ public:
 	int messageId;
 	int entityCreateDate;
 };
+
+class SecretChatSessionEntity
+{
+public:
+	int chatId;
+	ID userId;
+	ID accessHash;
+	ID partnerId;
+	bool isCreator;
+	int state;
+	std::vector<char> authKey;
+	ID keyFingerprint;
+	int inSeqNo;
+	int outSeqNo;
+	int layer;
+	int ttl;
+	int createdAt;
+};
+
+class SecretChatMessageEntity
+{
+public:
+	ID fakeId;
+	int chatId;
+	ID randomId;
+	ID senderId;
+	int date;
+	std::string text;
+	int ttl;
+	int destroyAt;
+	int inSeqNo;
+	int outSeqNo;
+};

@@ -6,6 +6,8 @@
 // Copyright @Radolyn, 2026
 #include "ayu/ui/context_menu/context_menu.h"
 
+#include "ayu/secret/secret_chat_manager.h"
+
 #include "apiwrap.h"
 #include "lang_auto.h"
 #include "mainwidget.h"
@@ -484,6 +486,26 @@ void AddDeleteOwnMessagesAction(PeerData *peerData,
 		tr::ayu_DeleteOwnMessages(tr::now),
 		DeleteMyMessagesHandler(sessionController, peerData),
 		&st::menuIconTTL);
+}
+
+void AddSecretChatAction(PeerData *peerData,
+						 not_null<Window::SessionController*> sessionController,
+						 const Window::PeerMenuCallback &addCallback) {
+	if (!peerData) {
+		return;
+	}
+	const auto user = peerData->asUser();
+	if (!user || user->isSelf() || user->isBot() || user->isServiceUser()) {
+		return;
+	}
+
+	addCallback(Window::PeerMenuCallback::Args{
+		.text = u"New Secret Chat"_q,
+		.handler = [=] {
+			sessionController->session().secretChats().requestChat(user);
+		},
+		.icon = &st::menuIconLock,
+	});
 }
 
 void AddHistoryAction(not_null<Ui::PopupMenu*> menu, HistoryItem *item) {

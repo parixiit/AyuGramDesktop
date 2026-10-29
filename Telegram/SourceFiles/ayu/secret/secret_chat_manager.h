@@ -64,6 +64,16 @@ private:
 		bytes::const_span remoteG_A,
 		const DhConfig &dh);
 
+	void loadSessionsFromDb();
+	void saveSessionToDb(const std::shared_ptr<SecretChat> &chat);
+	void saveMessageToDb(
+		int32 chatId,
+		uint64 randomId,
+		uint64 senderId,
+		TimeId date,
+		const QString &text,
+		int32 ttl);
+
 	const not_null<Main::Session*> _session;
 	std::map<int32, std::shared_ptr<SecretChat>> _chats;
 	std::optional<DhConfig> _dhConfig;
