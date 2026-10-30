@@ -8,6 +8,8 @@
  */
 #include "ayu/ui/text_selection_flyout.h"
 
+#include <QtSvg/QSvgRenderer>
+
 #include "base/event_filter.h"
 
 #include "ayu/ayu_settings.h"
@@ -32,6 +34,10 @@ constexpr auto kBtnWidth = 32;
 constexpr auto kBtnHeight = 30;
 constexpr auto kFlyoutPadding = 4;
 constexpr auto kAnimDuration = 140;
+
+constexpr auto kQuoteSvg = "<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.82645 8.61948C7.63092 9.73653 7.28608 10.6355 6.87439 11.384C6.22505 12.5647 5.39792 13.395 4.64645 14.1464C4.45118 14.3417 4.45118 14.6583 4.64645 14.8536C4.84171 15.0488 5.15829 15.0488 5.35355 14.8536L5.36545 14.8417C6.11184 14.0953 7.02879 13.1784 7.75061 11.866C8.48082 10.5383 9 8.82976 9 6.5C9 5.11929 7.88071 4 6.5 4C5.11929 4 4 5.11929 4 6.5C4 7.88071 5.11929 9 6.5 9C6.98728 9 7.442 8.86059 7.82645 8.61948ZM8 6.5C8 7.32843 7.32843 8 6.5 8C5.67157 8 5 7.32843 5 6.5C5 5.67157 5.67157 5 6.5 5C7.32843 5 8 5.67157 8 6.5ZM14.8264 8.61948C14.6309 9.73653 14.2861 10.6355 13.8744 11.384C13.225 12.5647 12.3979 13.395 11.6464 14.1464C11.4512 14.3417 11.4512 14.6583 11.6464 14.8536C11.8417 15.0488 12.1583 15.0488 12.3536 14.8536L12.3655 14.8417C13.1118 14.0953 14.0288 13.1784 14.7506 11.866C15.4808 10.5383 16 8.82976 16 6.5C16 5.11929 14.8807 4 13.5 4C12.1193 4 11 5.11929 11 6.5C11 7.88071 12.1193 9 13.5 9C13.9873 9 14.442 8.86059 14.8264 8.61948ZM13.5 8C12.6716 8 12 7.32843 12 6.5C12 5.67157 12.6716 5 13.5 5C14.3284 5 15 5.67157 15 6.5C15 7.32843 14.3284 8 13.5 8Z" fill="%1"/></svg>";
+
+constexpr auto kCodeSvg = "<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.6406 1.02073C12.9053 1.09864 13.0571 1.37606 12.9795 1.64084L7.97947 18.6408C7.90151 18.9055 7.62407 19.0573 7.35935 18.9797C7.09464 18.9018 6.94295 18.6243 7.02048 18.3596L12.0205 1.35959C12.0984 1.09481 12.3758 0.943089 12.6406 1.02073ZM5.12595 5.16819C5.30934 4.9619 5.62562 4.94297 5.83201 5.12619C6.03822 5.30959 6.05718 5.62588 5.874 5.83225L2.16892 10.0002L5.874 14.1682C6.05712 14.3746 6.03825 14.6909 5.83201 14.8742C5.62564 15.0573 5.30931 15.0384 5.12595 14.8322L1.12595 10.3322C0.95789 10.1429 0.95798 9.85755 1.12595 9.66819L5.12595 5.16819ZM14.1679 5.12619C14.3743 4.943 14.6906 4.96189 14.874 5.16819L18.874 9.66819C19.042 9.85754 19.0421 10.1429 18.874 10.3322L14.874 14.8322C14.6906 15.0384 14.3743 15.0573 14.1679 14.8742C13.9617 14.6909 13.9429 14.3746 14.126 14.1682L17.831 10.0002L14.126 5.83225C13.9428 5.6259 13.9618 5.3096 14.1679 5.12619Z" fill="%1"/></svg>";
 
 } // namespace
 
@@ -121,8 +127,8 @@ void TextSelectionFlyout::setupButtons() {
 		std::tuple{ ButtonType::Italic, u"I"_q, tr::lng_menu_formatting_italic(tr::now) },
 		std::tuple{ ButtonType::Underline, u"U"_q, tr::lng_menu_formatting_underline(tr::now) },
 		std::tuple{ ButtonType::Strikethrough, u"S"_q, tr::lng_menu_formatting_strike_out(tr::now) },
-		std::tuple{ ButtonType::Quote, QString::fromUtf8("”"), tr::lng_menu_formatting_blockquote(tr::now) },
-		std::tuple{ ButtonType::Monospace, u"</>"_q, tr::lng_menu_formatting_monospace(tr::now) },
+		std::tuple{ ButtonType::Quote, QString(), tr::lng_menu_formatting_blockquote(tr::now) },
+		std::tuple{ ButtonType::Monospace, QString(), tr::lng_menu_formatting_monospace(tr::now) },
 		std::tuple{ ButtonType::Spoiler, QString(), tr::lng_menu_formatting_spoiler(tr::now) },
 		std::tuple{ ButtonType::Link, QString(), tr::lng_menu_formatting_link_create(tr::now) },
 	};
@@ -423,18 +429,26 @@ void TextSelectionFlyout::paintEvent(QPaintEvent *e) {
 			} else {
 				st::menuIconLink.paint(p, iconPos, width());
 			}
-		} else if (btn.type == ButtonType::Monospace) {
-			auto font = st::semiboldFont->f;
-			font.setFamily(u"monospace"_q);
-			font.setBold(true);
-			p.setFont(font);
-			p.drawText(btn.rect, Qt::AlignCenter, btn.text);
 		} else if (btn.type == ButtonType::Quote) {
-			auto font = st::semiboldFont->f;
-			font.setPointSize(font.pointSize() + 3);
-			font.setBold(true);
-			p.setFont(font);
-			p.drawText(btn.rect.translated(0, -1), Qt::AlignCenter, btn.text);
+			const auto colorHex = (btn.active ? st::windowBgActive : st::windowFg)->c.name();
+			auto svg = QSvgRenderer(QString(kQuoteSvg).arg(colorHex).toUtf8());
+			const auto iconSize = 16.0;
+			const auto iconRect = QRectF(
+				btn.rect.x() + (btn.rect.width() - iconSize) / 2.0,
+				btn.rect.y() + (btn.rect.height() - iconSize) / 2.0,
+				iconSize,
+				iconSize);
+			svg.render(&p, iconRect);
+		} else if (btn.type == ButtonType::Monospace) {
+			const auto colorHex = (btn.active ? st::windowBgActive : st::windowFg)->c.name();
+			auto svg = QSvgRenderer(QString(kCodeSvg).arg(colorHex).toUtf8());
+			const auto iconSize = 16.0;
+			const auto iconRect = QRectF(
+				btn.rect.x() + (btn.rect.width() - iconSize) / 2.0,
+				btn.rect.y() + (btn.rect.height() - iconSize) / 2.0,
+				iconSize,
+				iconSize);
+			svg.render(&p, iconRect);
 		} else if (btn.type == ButtonType::Italic) {
 			auto font = st::semiboldFont->f;
 			font.setItalic(true);
