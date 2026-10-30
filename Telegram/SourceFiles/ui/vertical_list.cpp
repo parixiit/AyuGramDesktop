@@ -27,6 +27,20 @@ void AddSkip(not_null<Ui::VerticalLayout*> container, int skip) {
 void AddDivider(
 		not_null<Ui::VerticalLayout*> container,
 		const style::DividerBar &st) {
+	if (AyuSettings::getInstance().modernLayout()) {
+		const auto sep = container->add(
+			object_ptr<Ui::RpWidget>(container),
+			{ 0, 0, 0, 0 });
+		sep->resize(container->width(), 17);
+		sep->paintRequest() | rpl::on_next([=](QRect r) {
+			Painter p(sep);
+			const auto color = Window::Theme::IsNightMode()
+				? QColor(255, 255, 255, 22)
+				: QColor(0, 0, 0, 20);
+			p.fillRect(QRect(16, 8, sep->width() - 32, 1), color);
+		}, sep->lifetime());
+		return;
+	}
 	container->add(object_ptr<Ui::BoxContentDivider>(
 		container,
 		st::boxDividerHeight,
@@ -53,6 +67,14 @@ not_null<Ui::FlatLabel*> AddDividerText(
 		const style::margins &margins,
 		const style::DividerLabel &st,
 		RectParts parts) {
+	if (AyuSettings::getInstance().modernLayout()) {
+		return container->add(
+			object_ptr<Ui::FlatLabel>(
+				container,
+				std::move(text),
+				st.label),
+			margins);
+	}
 	auto label = object_ptr<Ui::FlatLabel>(
 		container,
 		std::move(text),

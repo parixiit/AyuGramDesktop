@@ -15,6 +15,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/effects/premium_graphics.h"
 #include "ui/effects/premium_top_bar.h"
 #include "ui/painter.h"
+#include "window/themes/window_theme.h"
 #include "ui/rect.h"
 #include "ui/search_field_controller.h"
 #include "ui/widgets/buttons.h"
@@ -884,8 +885,9 @@ void AddSeparator(
 	sep->resize(container->width(), marginY * 2 + 1);
 	sep->paintRequest() | rpl::on_next([=](QRect r) {
 		Painter p(sep);
-		auto color = st::windowFg->c;
-		color.setAlphaF(0.08);
+		const auto color = Window::Theme::IsNightMode()
+			? QColor(255, 255, 255, 22)
+			: QColor(0, 0, 0, 20);
 		p.fillRect(QRect(marginX, marginY, sep->width() - 2 * marginX, 1), color);
 	}, sep->lifetime());
 }

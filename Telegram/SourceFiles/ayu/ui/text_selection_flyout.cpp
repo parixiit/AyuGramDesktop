@@ -13,6 +13,7 @@
 #include "base/event_filter.h"
 
 #include "ayu/ayu_settings.h"
+#include "window/themes/window_theme.h"
 #include "lang/lang_keys.h"
 #include "ui/painter.h"
 #include "ui/widgets/fields/input_field.h"
@@ -380,7 +381,10 @@ void TextSelectionFlyout::paintEvent(QPaintEvent *e) {
 	p.setOpacity(opacity);
 
 	const auto r = rect().marginsRemoved({ 1, 1, 1, 1 });
-	p.setPen(st::windowBgOver);
+	const auto borderColor = Window::Theme::IsNightMode()
+		? QColor(255, 255, 255, 22)
+		: QColor(0, 0, 0, 20);
+	p.setPen(borderColor);
 	p.setBrush(st::windowBg);
 	p.drawRoundedRect(r, 8, 8);
 
@@ -388,7 +392,7 @@ void TextSelectionFlyout::paintEvent(QPaintEvent *e) {
 	if (_buttons.size() >= 2) {
 		const auto linkBtn = _buttons.back();
 		const auto sepX = linkBtn.rect.x() - 4;
-		p.setPen(st::windowBgOver);
+		p.setPen(borderColor);
 		p.drawLine(sepX, 7, sepX, height() - 7);
 	}
 

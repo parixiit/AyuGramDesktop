@@ -9,6 +9,7 @@
 #include "ayu/ui/settings/settings_nav_widget.h"
 
 #include "ayu/ui/settings/settings_main.h"
+#include "window/themes/window_theme.h"
 #include "info/profile/info_profile_badge.h"
 #include "info/profile/info_profile_emoji_status_panel.h"
 #include "boxes/language_box.h"
@@ -114,8 +115,9 @@ public:
 protected:
 	void paintEvent(QPaintEvent *e) override {
 		Painter p(this);
-		auto color = st::windowFg->c;
-		color.setAlphaF(0.08);
+		const auto color = Window::Theme::IsNightMode()
+			? QColor(255, 255, 255, 22)
+			: QColor(0, 0, 0, 20);
 		p.fillRect(QRect(_marginX, _marginY, width() - 2 * _marginX, 1), color);
 	}
 private:
@@ -469,6 +471,10 @@ void SettingsNavWidget::resizeEvent(QResizeEvent *e) {
 void SettingsNavWidget::paintEvent(QPaintEvent *e) {
 	Painter p(this);
 	p.fillRect(e->rect(), st::windowBg);
+	const auto borderColor = Window::Theme::IsNightMode()
+		? QColor(255, 255, 255, 22)
+		: QColor(0, 0, 0, 20);
+	p.fillRect(QRect(width() - 1, 0, 1, height()), borderColor);
 }
 
 } // namespace Ayu
