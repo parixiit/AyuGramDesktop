@@ -55,7 +55,6 @@ protected:
 private:
 	void setupTopBar();
 	void setupProfileCover();
-	void setupSearchBar();
 	void setupCategories();
 	void setActiveButton(NavButton *button);
 	void updateCoverGeometry(int newWidth);
@@ -76,8 +75,6 @@ private:
 	std::unique_ptr<Info::Profile::EmojiStatusPanel> _emojiStatusPanel;
 	std::unique_ptr<Info::Profile::Badge> _badge;
 
-	object_ptr<Ui::RpWidget> _searchWrap = { nullptr };
-	Ui::InputField *_searchField = nullptr;
 
 	object_ptr<Ui::ScrollArea> _scroll = { nullptr };
 	Ui::VerticalLayout *_content = nullptr;

@@ -418,8 +418,11 @@ void ColorsPalette::updateInnerGeometry() {
 	const auto maxSkip = 12.0;
 	const auto naturalSkip = (width - size * count) / float64(count - 1);
 	const auto skip = std::min(naturalSkip, maxSkip);
+	const auto totalWidth = count * size + (count - 1) * skip;
 	const auto y = st::defaultVerticalListSkip * 2;
-	auto x = float64(padding.left());
+	auto x = (width > totalWidth)
+		? padding.left() + (width - totalWidth) / 2.0
+		: float64(padding.left());
 	for (const auto &button : _buttons) {
 		button->moveToLeft(int(base::SafeRound(x)), y);
 		x += size + skip;

@@ -91,6 +91,10 @@ void Manager::ensureDhConfig(Fn<void(const DhConfig &)> callback) {
 void Manager::requestChat(not_null<UserData*> user) {
 	ensureDhConfig([=](const DhConfig &dh) {
 		auto keyPair = Crypto::GenerateKeyPair(dh.g, dh.p);
+		if (keyPair.publicComponent.empty() || keyPair.privateKey.empty()) {
+			LOG(("Secret Chat Error: Failed to generate key pair."));
+			return;
+		}
 		const auto randomId = base::RandomValue<int32>();
 
 		_session->api().request(MTPmessages_RequestEncryption(
@@ -112,6 +116,8 @@ void Manager::requestChat(not_null<UserData*> user) {
 				_chatUpdated.fire(chat.get());
 			}, [](const auto &) {
 			});
+		}).fail([=](const MTP::Error &error) {
+			LOG(("Secret Chat: RequestEncryption error: %1").arg(error.type()));
 		}).send();
 	});
 }
@@ -157,6 +163,8 @@ void Manager::finishAccept(
 			_chatUpdated.fire(chat.get());
 		}, [](const auto &) {
 		});
+	}).fail([=](const MTP::Error &error) {
+		LOG(("Secret Chat: AcceptEncryption error: %1").arg(error.type()));
 	}).send();
 }
 

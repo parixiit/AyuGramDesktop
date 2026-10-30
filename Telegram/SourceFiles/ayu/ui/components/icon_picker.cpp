@@ -36,8 +36,7 @@ const QVector<QString> icons{
 	AyuAssets::EXTERA2_ICON,
 };
 
-const auto rows = static_cast<int>(icons.size()) / IconPicker::kColumns
-	+ std::min(1, static_cast<int>(icons.size()) % IconPicker::kColumns);
+
 
 void applyIcon() {
 #ifdef Q_OS_WIN
@@ -56,12 +55,29 @@ void applyIcon() {
 IconPicker::IconPicker(QWidget *parent)
 	: RpWidget(parent) {
 	widthValue() | rpl::on_next([=](int w) {
-		const auto cell = w / kColumns;
+		const auto cols = columnsCount();
+		const auto rows = rowsCount();
+		const auto cell = cellWidth();
 		const auto iconSize = st::iconPickerIconSize;
 		const auto contentSize = iconSize + st::iconPickerImagePadding * 2;
 		const auto h = rows * cell - (cell - contentSize);
 		resize(w, h);
 	}, lifetime());
+}
+
+int IconPicker::columnsCount() const {
+	if (AyuSettings::getInstance().modernLayout()) {
+		const auto iconSize = st::iconPickerIconSize;
+		const auto minCell = iconSize + st::iconPickerImagePadding * 2 + 16;
+		return std::clamp(width() / minCell, 4, 8);
+	}
+	return kColumns;
+}
+
+int IconPicker::rowsCount() const {
+	const auto cols = columnsCount();
+	return static_cast<int>(icons.size()) / cols
+		+ std::min(1, static_cast<int>(icons.size()) % cols);
 }
 
 void IconPicker::drawIcon(QPainter &p, const QImage &icon, int x, int y, float strokeOpacity) {
@@ -92,19 +108,27 @@ void IconPicker::drawIcon(QPainter &p, const QImage &icon, int x, int y, float s
 }
 
 int IconPicker::cellWidth() const {
-	return width() / kColumns;
+	const auto cols = columnsCount();
+	if (AyuSettings::getInstance().modernLayout()) {
+		return std::min(width() / cols, 80);
+	}
+	return width() / cols;
 }
 
 void IconPicker::paintEvent(QPaintEvent *e) {
 	Painter p(this);
 
+	const auto cols = columnsCount();
+	const auto rows = rowsCount();
 	const auto cell = cellWidth();
 	const auto iconSize = st::iconPickerIconSize;
+	const auto totalWidth = cols * cell;
+	const auto startX = (width() > totalWidth) ? (width() - totalWidth) / 2 : 0;
 
 	for (int row = 0; row < rows; row++) {
-		const auto columns = std::min(kColumns, static_cast<int>(icons.size()) - row * kColumns);
+		const auto columns = std::min(cols, static_cast<int>(icons.size()) - row * cols);
 		for (int i = 0; i < columns; i++) {
-			auto const idx = i + row * kColumns;
+			auto const idx = i + row * cols;
 
 			const auto &iconName = icons[idx];
 			if (iconName.isEmpty()) {
@@ -123,7 +147,7 @@ void IconPicker::paintEvent(QPaintEvent *e) {
 				opacity = _wasSelected.isEmpty() ? 1.0f : _animation.value(1.0f);
 			}
 
-			const auto x = i * cell + (cell - iconSize) / 2;
+			const auto x = startX + i * cell + (cell - iconSize) / 2;
 			const auto y = row * cell;
 
 			drawIcon(p, icon, x, y, opacity);
@@ -135,15 +159,19 @@ void IconPicker::mousePressEvent(QMouseEvent *e) {
 	const auto &settings = AyuSettings::getInstance();
 	auto changed = false;
 
+	const auto cols = columnsCount();
+	const auto rows = rowsCount();
 	const auto cell = cellWidth();
 	const auto iconSize = st::iconPickerIconSize;
+	const auto totalWidth = cols * cell;
+	const auto startX = (width() > totalWidth) ? (width() - totalWidth) / 2 : 0;
 
 	for (int row = 0; row < rows; row++) {
-		const auto columns = std::min(kColumns, static_cast<int>(icons.size()) - row * kColumns);
+		const auto columns = std::min(cols, static_cast<int>(icons.size()) - row * cols);
 		for (int i = 0; i < columns; i++) {
-			auto const idx = i + row * kColumns;
+			auto const idx = i + row * cols;
 
-			const auto x = i * cell + (cell - iconSize) / 2;
+			const auto x = startX + i * cell + (cell - iconSize) / 2;
 			const auto y = row * cell;
 
 			if (e->pos().x() >= x && e->pos().x() <= x + iconSize

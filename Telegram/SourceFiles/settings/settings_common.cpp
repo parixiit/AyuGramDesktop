@@ -876,4 +876,18 @@ bool MatchesWords(const QStringList &terms, const QStringList &words) {
 	return true;
 }
 
+void AddSeparator(
+		not_null<Ui::VerticalLayout*> container,
+		int marginX,
+		int marginY) {
+	auto sep = container->add(object_ptr<Ui::RpWidget>(container));
+	sep->resize(container->width(), marginY * 2 + 1);
+	sep->paintRequest() | rpl::on_next([=](QRect r) {
+		Painter p(sep);
+		auto color = st::windowFg->c;
+		color.setAlphaF(0.08);
+		p.fillRect(QRect(marginX, marginY, sep->width() - 2 * marginX, 1), color);
+	}, sep->lifetime());
+}
+
 } // namespace Settings

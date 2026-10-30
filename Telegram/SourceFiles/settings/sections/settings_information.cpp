@@ -77,6 +77,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 // AyuGram includes
 #include "ayu/ui/ayu_userpic.h"
+#include "ayu/ayu_settings.h"
 #include "ayu/utils/telegram_helpers.h"
 #include "styles/style_info.h"
 
@@ -622,8 +623,12 @@ void SetupPersonalChannel(
 		targets->colorButton = colorButton;
 	}
 
-	Ui::AddSkip(container);
-	Ui::AddDivider(container);
+	if (AyuSettings::getInstance().modernLayout()) {
+		AddSeparator(container, 16, 8);
+	} else {
+		Ui::AddSkip(container);
+		Ui::AddDivider(container);
+	}
 }
 
 void SetupRows(
@@ -854,7 +859,11 @@ void SetupAccountsWrap(
 		not_null<Ui::VerticalLayout*> container,
 		not_null<Window::SessionController*> controller,
 		InformationHighlightTargets *targets) {
-	Ui::AddSkip(container);
+	if (AyuSettings::getInstance().modernLayout()) {
+		AddSeparator(container, 16, 8);
+	} else {
+		Ui::AddSkip(container);
+	}
 
 	auto events = SetupAccounts(container, controller);
 	if (targets) {

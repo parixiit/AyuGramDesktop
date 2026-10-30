@@ -57,6 +57,12 @@ KeyPair Crypto::GenerateKeyPair(
 		int32 g,
 		bytes::const_span primeBytes,
 		bytes::const_span randomSeed) {
+	bytes::vector generatedSeed;
+	if (randomSeed.size() != MTP::ModExpFirst::kRandomPowerSize) {
+		generatedSeed.resize(MTP::ModExpFirst::kRandomPowerSize);
+		bytes::set_random(generatedSeed);
+		randomSeed = generatedSeed;
+	}
 	auto modexp = MTP::CreateModExp(g, primeBytes, randomSeed);
 	return KeyPair{
 		.publicComponent = std::move(modexp.modexp),

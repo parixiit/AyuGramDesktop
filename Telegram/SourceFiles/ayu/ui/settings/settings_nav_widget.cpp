@@ -27,7 +27,6 @@
 #include "settings/sections/settings_premium.h"
 #include "settings/sections/settings_privacy_security.h"
 #include "settings/settings_power_saving.h"
-#include "settings/settings_search.h"
 #include "ui/boxes/peer_qr_box.h"
 #include "ui/controls/userpic_button.h"
 #include "ui/layers/generic_box.h"
@@ -152,14 +151,14 @@ void NavButton::paintEvent(QPaintEvent *e) {
 		: softFg;
 
 	if (_icon) {
-		const auto iconX = 22;
+		const auto iconX = 20;
 		const auto iconY = (height() - _icon->height()) / 2;
 		_icon->paint(p, QPoint(iconX, iconY), width(), fg);
 	}
 
 	p.setFont(st::normalFont);
 	p.setPen(fg);
-	const auto textX = 54;
+	const auto textX = 64;
 	const auto textW = width() - textX - 16;
 	p.drawText(
 		QRect(textX, 0, textW, height()),
@@ -178,7 +177,6 @@ SettingsNavWidget::SettingsNavWidget(
 
 	setupTopBar();
 	setupProfileCover();
-	setupSearchBar();
 	setupCategories();
 
 	_controller->session().changes().peerUpdates(
@@ -235,7 +233,7 @@ void SettingsNavWidget::setupProfileCover() {
 	_userpic->moveToLeft(16, 11);
 
 	_name.create(_cover.data(), _user->name(), st::infoProfileCover.name);
-	_name->moveToLeft(78, 13);
+	_name->moveToLeft(88, 13);
 
 	const auto username = !_user->username().isEmpty()
 		? ("@" + _user->username())
@@ -243,7 +241,7 @@ void SettingsNavWidget::setupProfileCover() {
 		? _user->phone()
 		: tr::lng_status_online(tr::now);
 	_status.create(_cover.data(), username, st::defaultFlatLabel);
-	_status->moveToLeft(78, 37);
+	_status->moveToLeft(88, 37);
 
 	_qrButton.create(_cover.data(), st::infoProfileLabeledButtonQr);
 	_qrButton->moveToRight(16, 16);
@@ -285,7 +283,7 @@ void SettingsNavWidget::updateCoverGeometry(int newWidth) {
 	if (!_cover || !_name) {
 		return;
 	}
-	const auto nameLeft = 78;
+	const auto nameLeft = 88;
 	const auto nameTop = 13;
 	const auto qrWidth = (_qrButton && !_qrButton->isHidden())
 		? (_qrButton->width() + 16)
@@ -311,35 +309,6 @@ void SettingsNavWidget::updateCoverGeometry(int newWidth) {
 	if (_qrButton) {
 		_qrButton->moveToRight(16, 16);
 	}
-}
-
-void SettingsNavWidget::setupSearchBar() {
-	_searchWrap.create(this);
-	_searchWrap->resize(width(), 44);
-
-	_searchField = Ui::CreateChild<Ui::InputField>(
-		_searchWrap.data(),
-		st::dialogsFilter,
-		rpl::single(u"Search Settings"_q));
-
-	_searchField->changes(
-	) | rpl::on_next([=] {
-		const auto query = _searchField->getLastText();
-		if (!query.isEmpty()) {
-			_controller->showSettings(
-				::Settings::Search::Id(),
-				Window::SectionShow::Way::ClearStack);
-		}
-	}, _searchField->lifetime());
-
-	_searchField->focusedChanges(
-	) | rpl::on_next([=](bool focused) {
-		if (focused) {
-			_controller->showSettings(
-				::Settings::Search::Id(),
-				Window::SectionShow::Way::ClearStack);
-		}
-	}, _searchField->lifetime());
 }
 
 void SettingsNavWidget::setupCategories() {
@@ -481,7 +450,6 @@ void SettingsNavWidget::resizeEvent(QResizeEvent *e) {
 	RpWidget::resizeEvent(e);
 	const auto topBarHeight = _topBar ? _topBar->height() : 0;
 	const auto coverHeight = _cover ? _cover->height() : 0;
-	const auto searchHeight = _searchWrap ? _searchWrap->height() : 0;
 	if (_topBar) {
 		_topBar->setGeometryToLeft(0, 0, width(), topBarHeight);
 	}
@@ -489,14 +457,8 @@ void SettingsNavWidget::resizeEvent(QResizeEvent *e) {
 		_cover->setGeometryToLeft(0, topBarHeight, width(), coverHeight);
 		updateCoverGeometry(width());
 	}
-	if (_searchWrap) {
-		_searchWrap->setGeometryToLeft(0, topBarHeight + coverHeight, width(), searchHeight);
-		if (_searchField) {
-			_searchField->setGeometryToLeft(12, 5, width() - 24, 34);
-		}
-	}
 	if (_scroll) {
-		const auto scrollY = topBarHeight + coverHeight + searchHeight;
+		const auto scrollY = topBarHeight + coverHeight;
 		_scroll->setGeometryToLeft(0, scrollY, width(), height() - scrollY);
 		if (_content) {
 			_content->resizeToWidth(width());

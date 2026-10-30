@@ -42,6 +42,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 // AyuGram includes
 #include "ayu/features/message_shot/message_shot.h"
+#include "ayu/ayu_settings.h"
 
 
 namespace Window {
@@ -974,13 +975,23 @@ void CloudList::updateGeometry() {
 
 int CloudList::resizeGetHeight(int newWidth) {
 	const auto minSkip = st::settingsThemeMinSkip;
+	const auto isModern = AyuSettings::getInstance().modernLayout();
 	const auto single = std::min(
 		st::settingsThemePreviewSize.width(),
 		(newWidth - minSkip * (kShowPerRow - 1)) / kShowPerRow);
-	const auto skip = (newWidth - kShowPerRow * single)
-		/ float64(kShowPerRow - 1);
+	const auto perRow = isModern
+		? std::clamp(int((newWidth + 16) / (single + 16)), kShowPerRow, 8)
+		: kShowPerRow;
+	const auto naturalSkip = (perRow > 1)
+		? (newWidth - perRow * single) / float64(perRow - 1)
+		: 0.0;
+	const auto skip = isModern ? std::min(naturalSkip, 16.0) : naturalSkip;
+	const auto totalRowWidth = perRow * single + (perRow - 1) * skip;
+	const auto startX = (isModern && newWidth > totalRowWidth)
+		? (newWidth - totalRowWidth) / 2.0
+		: 0.0;
 
-	auto x = 0.;
+	auto x = startX;
 	auto y = 0;
 
 	auto index = 0;
@@ -991,8 +1002,8 @@ int CloudList::resizeGetHeight(int newWidth) {
 		button->moveToLeft(int(base::SafeRound(x)), y);
 		accumulate_max(rowHeight, button->height());
 		x += single + skip;
-		if (++index == kShowPerRow) {
-			x = 0.;
+		if (++index == perRow) {
+			x = startX;
 			index = 0;
 			y += rowHeight + st::themesSmallSkip;
 			rowHeight = 0;
