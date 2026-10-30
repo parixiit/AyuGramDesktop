@@ -7,6 +7,13 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "ui/vertical_list.h"
 
+#include "ayu/ayu_settings.h"
+#include "ui/painter.h"
+
+namespace Window::Theme {
+[[nodiscard]] bool IsNightMode();
+}
+
 #include "lang/lang_text_entity.h"
 #include "ui/widgets/box_content_divider.h"
 #include "ui/widgets/labels.h"

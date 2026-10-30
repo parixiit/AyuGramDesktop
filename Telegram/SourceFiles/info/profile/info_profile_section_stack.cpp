@@ -7,6 +7,13 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "info/profile/info_profile_section_stack.h"
 
+#include "ayu/ayu_settings.h"
+#include "ui/painter.h"
+
+namespace Window::Theme {
+[[nodiscard]] bool IsNightMode();
+}
+
 #include "ui/widgets/box_content_divider.h"
 #include "ui/widgets/labels.h"
 #include "ui/wrap/slide_wrap.h"
@@ -22,6 +29,21 @@ namespace {
 
 [[nodiscard]] not_null<Ui::SlideWrap<>*> CreatePlainSeparator(
 		not_null<Ui::VerticalLayout*> layout) {
+	if (AyuSettings::getInstance().modernLayout()) {
+		auto sep = object_ptr<Ui::RpWidget>(layout);
+		const auto raw = sep.data();
+		raw->resize(layout->width(), 17);
+		raw->paintRequest() | rpl::on_next([=](QRect r) {
+			Painter p(raw);
+			const auto color = Window::Theme::IsNightMode()
+				? QColor(255, 255, 255, 22)
+				: QColor(0, 0, 0, 20);
+			p.fillRect(QRect(16, 8, raw->width() - 32, 1), color);
+		}, raw->lifetime());
+		return layout->add(object_ptr<Ui::SlideWrap<Ui::RpWidget>>(
+			layout,
+			std::move(sep)));
+	}
 	auto inner = object_ptr<Ui::VerticalLayout>(layout);
 	Ui::AddSkip(inner.data(), st::infoProfileSkip);
 	inner->add(object_ptr<Ui::BoxContentDivider>(
@@ -39,19 +61,23 @@ namespace {
 		rpl::producer<TextWithEntities> text,
 		Fn<void(not_null<Ui::FlatLabel*>)> setup) {
 	auto inner = object_ptr<Ui::VerticalLayout>(layout);
-	Ui::AddSkip(inner.data(), st::infoProfileSkip);
 	auto label = object_ptr<Ui::FlatLabel>(
 		inner.data(),
 		std::move(text),
 		st::defaultDividerLabel.label);
 	const auto rawLabel = label.data();
-	inner->add(object_ptr<Ui::DividerLabel>(
-		inner.data(),
-		std::move(label),
-		st::defaultBoxDividerLabelPadding,
-		st::defaultDividerLabel.bar,
-		RectPart::Top | RectPart::Bottom));
-	Ui::AddSkip(inner.data(), st::infoProfileSkip);
+	if (AyuSettings::getInstance().modernLayout()) {
+		inner->add(std::move(label), st::defaultBoxDividerLabelPadding);
+	} else {
+		Ui::AddSkip(inner.data(), st::infoProfileSkip);
+		inner->add(object_ptr<Ui::DividerLabel>(
+			inner.data(),
+			std::move(label),
+			st::defaultBoxDividerLabelPadding,
+			st::defaultDividerLabel.bar,
+			RectPart::Top | RectPart::Bottom));
+		Ui::AddSkip(inner.data(), st::infoProfileSkip);
+	}
 	const auto wrap = layout->add(
 		object_ptr<Ui::SlideWrap<Ui::VerticalLayout>>(
 			layout,
@@ -180,7 +206,9 @@ void SectionStack::finalize() {
 
 	_finalized = true;
 
-	Ui::AddSkip(_layout, st::infoProfileSkip);
+	if (!AyuSettings::getInstance().modernLayout()) {
+		Ui::AddSkip(_layout, st::infoProfileSkip);
+	}
 
 	const auto count = int(_rows.size());
 	auto kinds = std::vector<RowType>();
@@ -215,7 +243,9 @@ void SectionStack::finalize() {
 		}
 	}
 
-	Ui::AddSkip(_layout, st::infoProfileSkip);
+	if (!AyuSettings::getInstance().modernLayout()) {
+		Ui::AddSkip(_layout, st::infoProfileSkip);
+	}
 
 	if (intrinsic.empty()) {
 		return;

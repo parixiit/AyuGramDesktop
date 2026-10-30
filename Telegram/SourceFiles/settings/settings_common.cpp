@@ -15,7 +15,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/effects/premium_graphics.h"
 #include "ui/effects/premium_top_bar.h"
 #include "ui/painter.h"
-#include "window/themes/window_theme.h"
+namespace Window::Theme { [[nodiscard]] bool IsNightMode(); }
 #include "ui/rect.h"
 #include "ui/search_field_controller.h"
 #include "ui/widgets/buttons.h"

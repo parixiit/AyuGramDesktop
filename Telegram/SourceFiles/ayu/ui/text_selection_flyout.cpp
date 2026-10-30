@@ -13,7 +13,7 @@
 #include "base/event_filter.h"
 
 #include "ayu/ayu_settings.h"
-#include "window/themes/window_theme.h"
+namespace Window::Theme { [[nodiscard]] bool IsNightMode(); }
 #include "lang/lang_keys.h"
 #include "ui/painter.h"
 #include "ui/widgets/fields/input_field.h"

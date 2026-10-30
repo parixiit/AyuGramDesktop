@@ -9,7 +9,7 @@
 #include "ayu/ui/settings/settings_nav_widget.h"
 
 #include "ayu/ui/settings/settings_main.h"
-#include "window/themes/window_theme.h"
+namespace Window::Theme { [[nodiscard]] bool IsNightMode(); }
 #include "info/profile/info_profile_badge.h"
 #include "info/profile/info_profile_emoji_status_panel.h"
 #include "boxes/language_box.h"

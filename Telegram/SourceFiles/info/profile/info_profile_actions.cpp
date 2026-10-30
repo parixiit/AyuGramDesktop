@@ -7,6 +7,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "info/profile/info_profile_actions.h"
 
+#include "ayu/ayu_settings.h"
+
 #include "api/api_blocked_peers.h"
 #include "api/api_chat_participants.h"
 #include "api/api_credits.h"
@@ -3031,9 +3033,13 @@ void ActionsFiller::addBalanceActions(not_null<UserData*> user) {
 	Ui::AddSubsectionTitle(inner, tr::lng_manage_peer_bot_balance());
 	auto currencyBalance = AddCurrencyAction(user, inner, _controller);
 	auto creditsBalance = AddCreditsAction(user, inner, _controller);
-	Ui::AddSkip(inner);
+	if (!AyuSettings::getInstance().modernLayout()) {
+		Ui::AddSkip(inner);
+	}
 	Ui::AddDivider(inner);
-	Ui::AddSkip(inner);
+	if (!AyuSettings::getInstance().modernLayout()) {
+		Ui::AddSkip(inner);
+	}
 	wrap->toggleOn(
 		rpl::combine(
 			std::move(currencyBalance),
@@ -3115,9 +3121,13 @@ void ActionsFiller::addFastButtonsMode(not_null<UserData*> user) {
 		st::infoIconMediaBot,
 		st::infoSharedMediaButtonIconPosition);
 
-	AddSkip(_wrap);
+	if (!AyuSettings::getInstance().modernLayout()) {
+		AddSkip(_wrap);
+	}
 	AddDivider(_wrap);
-	AddSkip(_wrap);
+	if (!AyuSettings::getInstance().modernLayout()) {
+		AddSkip(_wrap);
+	}
 
 	button->toggleOn(bots->enabledValue(user));
 	button->toggledValue(
