@@ -499,6 +499,29 @@ void AddSecretChatAction(PeerData *peerData,
 		return;
 	}
 
+	if (const auto secret = sessionController->session().secretChats().activeChatForUser(user->id)) {
+		const auto isWaiting = (secret->state() == Ayu::Secret::State::Waiting);
+		addCallback(Window::PeerMenuCallback::Args{
+			.text = isWaiting ? u"Cancel Secret Chat"_q : u"End Secret Chat"_q,
+			.handler = [=] {
+				sessionController->show(Ui::MakeConfirmBox({
+					.text = isWaiting
+						? u"Are you sure you want to cancel the secret chat request with %1?"_q.arg(user->shortName())
+						: u"Are you sure you want to end this secret chat with %1?"_q.arg(user->shortName()),
+					.confirmed = [=](Fn<void()> &&close) {
+						sessionController->session().secretChats().discardChat(secret->chatId(), true);
+						sessionController->showToast(isWaiting ? u"Secret chat cancelled."_q : u"Secret chat ended."_q);
+						close();
+					},
+					.confirmText = isWaiting ? u"Cancel Secret Chat"_q : u"End Secret Chat"_q,
+					.confirmStyle = &st::attentionBoxButton,
+				}));
+			},
+			.icon = &st::menuIconDelete,
+		});
+		return;
+	}
+
 	addCallback(Window::PeerMenuCallback::Args{
 		.text = u"New Secret Chat"_q,
 		.handler = [=] {

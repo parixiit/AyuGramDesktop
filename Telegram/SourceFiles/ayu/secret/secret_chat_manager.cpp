@@ -47,6 +47,18 @@ std::shared_ptr<SecretChat> Manager::chatForUser(UserId userId) const {
 	return nullptr;
 }
 
+std::shared_ptr<SecretChat> Manager::activeChatForUser(UserId userId) const {
+	for (const auto &[id, chat] : _chats) {
+		if (chat->partnerId() == userId
+			&& (chat->state() == State::Ready
+				|| chat->state() == State::Waiting
+				|| chat->state() == State::Requested)) {
+			return chat;
+		}
+	}
+	return nullptr;
+}
+
 const std::map<int32, std::shared_ptr<SecretChat>> &Manager::chats() const {
 	return _chats;
 }

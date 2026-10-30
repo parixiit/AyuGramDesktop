@@ -722,6 +722,16 @@ void TopBarWidget::paintTopBar(Painter &p) {
 			nameleft += skip + st::dialogsChatTypeSkip;
 			namewidth -= skip + st::dialogsChatTypeSkip;
 		}
+		if (const auto user = namePeer->asUser()) {
+			if (user->session().secretChats().chatForUser(user->id)) {
+				const auto lockIcon = &st::dialogsLockIcon.icon;
+				const auto iconTop = nametop + (st::msgNameStyle.font->height - lockIcon->height()) / 2;
+				lockIcon->paint(p, nameleft, iconTop, width());
+				nameleft += lockIcon->width() + 5;
+				namewidth -= lockIcon->width() + 5;
+			}
+		}
+
 		const auto badgeWidth = _titleBadge.drawGetWidth(p, {
 			.peer = namePeer,
 			.rectForName = QRect(
@@ -745,16 +755,6 @@ void TopBarWidget::paintTopBar(Painter &p) {
 				Window::GifPauseReason::Any),
 		});
 		namewidth -= badgeWidth;
-
-		if (const auto user = namePeer->asUser()) {
-			if (user->session().secretChats().chatForUser(user->id)) {
-				const auto lockIcon = &st::dialogsLockIcon.icon;
-				const auto iconTop = nametop + (st::msgNameStyle.font->height - lockIcon->height()) / 2;
-				lockIcon->paint(p, nameleft, iconTop, width());
-				nameleft += lockIcon->width() + st::dialogsChatTypeSkip;
-				namewidth -= lockIcon->width() + st::dialogsChatTypeSkip;
-			}
-		}
 
 		p.setPen(st::dialogsNameFg);
 		_title.draw(p, {

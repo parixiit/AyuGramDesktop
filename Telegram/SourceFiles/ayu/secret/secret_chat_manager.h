@@ -56,6 +56,10 @@ public:
 	[[nodiscard]] std::shared_ptr<SecretChat> chatForUser(PeerId peerId) const {
 		return chatForUser(peerToUser(peerId));
 	}
+	[[nodiscard]] std::shared_ptr<SecretChat> activeChatForUser(UserId userId) const;
+	[[nodiscard]] std::shared_ptr<SecretChat> activeChatForUser(PeerId peerId) const {
+		return activeChatForUser(peerToUser(peerId));
+	}
 	[[nodiscard]] const std::map<int32, std::shared_ptr<SecretChat>> &chats() const;
 
 	void handleUpdateEncryption(const MTPDupdateEncryption &update);
