@@ -28,7 +28,9 @@ namespace Ayu::Secret {
 
 Manager::Manager(not_null<Main::Session*> session)
 : _session(session) {
-	loadSessionsFromDb();
+	crl::on_main(_session, [=] {
+		loadSessionsFromDb();
+	});
 }
 
 Manager::~Manager() = default;

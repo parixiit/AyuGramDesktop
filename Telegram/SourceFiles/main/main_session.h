@@ -318,7 +318,6 @@ private:
 
 	const std::unique_ptr<SessionSettings> _settings;
 	const std::unique_ptr<Data::Changes> _changes;
-	const std::unique_ptr<Ayu::Secret::Manager> _secretChats;
 	const std::unique_ptr<ApiWrap> _api;
 	const std::unique_ptr<Api::Updates> _updates;
 	const std::unique_ptr<Api::SendProgressManager> _sendProgressManager;
@@ -329,6 +328,7 @@ private:
 	// _data depends on _downloader / _uploader.
 	const std::unique_ptr<Data::Session> _data;
 	const not_null<UserData*> _user;
+	const std::unique_ptr<Ayu::Secret::Manager> _secretChats;
 
 	// _emojiStickersPack depends on _data.
 	const std::unique_ptr<Stickers::EmojiPack> _emojiStickersPack;
