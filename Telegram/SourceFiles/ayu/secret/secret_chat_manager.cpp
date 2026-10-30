@@ -122,7 +122,7 @@ void Manager::requestChat(not_null<UserData*> user) {
 					accessHash,
 					peerToUser(user->id),
 					true);
-				chat->setLocalPrivateKey(std::move(priv));
+				chat->setLocalPrivateKey(priv);
 				chat->setState(State::Waiting);
 				_chats[chatId] = chat;
 				_chatUpdated.fire(chat.get());
@@ -168,7 +168,7 @@ void Manager::finishAccept(
 		MTP_long(fingerprint)
 	)).done([=, key = std::move(authKey)](const MTPEncryptedChat &result) {
 		result.match([&](const MTPDencryptedChat &data) {
-			chat->setAuthKey(std::move(key));
+			chat->setAuthKey(key);
 			chat->setKeyFingerprint(fingerprint);
 			chat->setState(State::Ready);
 			saveSessionToDb(chat);

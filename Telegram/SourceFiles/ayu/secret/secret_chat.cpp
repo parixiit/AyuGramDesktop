@@ -30,6 +30,10 @@ uint64 SecretChat::accessHash() const {
 	return _accessHash;
 }
 
+void SecretChat::setAccessHash(uint64 accessHash) {
+	_accessHash = accessHash;
+}
+
 UserId SecretChat::partnerId() const {
 	return _partnerId;
 }

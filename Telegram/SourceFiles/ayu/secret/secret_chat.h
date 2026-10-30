@@ -30,6 +30,7 @@ public:
 
 	[[nodiscard]] int32 chatId() const;
 	[[nodiscard]] uint64 accessHash() const;
+	void setAccessHash(uint64 accessHash);
 	[[nodiscard]] UserId partnerId() const;
 	[[nodiscard]] bool isCreator() const;
 
