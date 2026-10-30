@@ -191,10 +191,12 @@ void Histories::readInbox(not_null<History*> history) {
 		return;
 	} else if (history->loadedAtBottom()) {
 		if (const auto lastId = history->maxMsgId()) {
-			DEBUG_LOG(("Reading: loaded at bottom, maxMsgId %1."
-				).arg(lastId.bare));
-			readInboxTill(history, lastId);
-			return;
+			if (IsServerMsgId(lastId)) {
+				DEBUG_LOG(("Reading: loaded at bottom, maxMsgId %1."
+					).arg(lastId.bare));
+				readInboxTill(history, lastId);
+				return;
+			}
 		} else if (history->loadedAtTop()) {
 			DEBUG_LOG(("Reading: loaded at bottom, loaded at top."));
 			readInboxTill(history, 0);
@@ -247,6 +249,9 @@ void Histories::readInboxTill(not_null<HistoryItem*> item) {
 			return;
 		}
 	}
+	if (!IsServerMsgId(item->id)) {
+		return;
+	}
 	readInboxTill(history, item->id);
 }
 
@@ -258,6 +263,10 @@ void Histories::readInboxTill(
 		not_null<History*> history,
 		MsgId tillId,
 		bool force) {
+	if (tillId && !IsServerMsgId(tillId)) {
+		history->readClientSideMessages();
+		return;
+	}
 	Expects(IsServerMsgId(tillId) || (!tillId && !force));
 
 	DEBUG_LOG(("Reading: readInboxTill %1, force %2."

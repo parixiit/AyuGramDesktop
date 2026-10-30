@@ -192,6 +192,8 @@ void Manager::discardChat(int32 chatId, bool deleteHistory) {
 
 	if (deleteHistory) {
 		AyuDatabase::deleteSecretChatSession(chatId);
+		AyuDatabase::clearSecretChatMessages(chatId);
+		_chats.erase(chatId);
 	} else {
 		saveSessionToDb(secret);
 	}
@@ -671,7 +673,7 @@ void Manager::insertLocalMessage(
 	history->addNewMessage(
 		msgId,
 		mtpMsg,
-		MessageFlag::HasFromId | (isOut ? MessageFlag::Outgoing : MessageFlag(0)),
+		MessageFlag::HasFromId | MessageFlag::HistoryEntry | MessageFlag::Local | (isOut ? MessageFlag::Outgoing : MessageFlag(0)),
 		NewMessageType::Unread);
 }
 

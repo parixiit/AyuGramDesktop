@@ -2096,6 +2096,9 @@ void History::calculateFirstUnreadMessage() {
 }
 
 bool History::readInboxTillNeedsRequest(MsgId tillId) {
+	if (tillId && !IsServerMsgId(tillId)) {
+		return false;
+	}
 	Expects(!tillId || IsServerMsgId(tillId));
 
 	readClientSideMessages();
@@ -3797,7 +3800,7 @@ MsgId History::maxMsgId() const {
 	for (const auto &block : ranges::views::reverse(blocks)) {
 		for (const auto &message : ranges::views::reverse(block->messages)) {
 			const auto item = message->data();
-			if (item->isRegular()) {
+			if (item->isRegular() && IsServerMsgId(item->id)) {
 				return item->id;
 			}
 		}
