@@ -264,7 +264,6 @@ void Histories::readInboxTill(
 		MsgId tillId,
 		bool force) {
 	if (tillId && !IsServerMsgId(tillId)) {
-		history->readClientSideMessages();
 		return;
 	}
 	Expects(IsServerMsgId(tillId) || (!tillId && !force));
@@ -718,7 +717,7 @@ void Histories::sendReadRequests() {
 			state.willReadWhen = 0;
 			histories.push_back(history);
 		}
-		for (const auto history : histories) {
+		for (const auto &history : histories) {
 			checkEmptyState(history);
 		}
 		return;
