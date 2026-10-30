@@ -70,6 +70,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_chat_participants.h"
 #include "styles/style_window.h"
 #include "styles/style_dialogs.h"
+#include "styles/style_dialogs_layout.h"
 #include "styles/style_chat.h"
 #include "styles/style_info.h"
 
