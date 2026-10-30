@@ -97,6 +97,26 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 namespace Window {
 namespace {
 
+class DrawerSeparator final : public Ui::RpWidget {
+public:
+	DrawerSeparator(QWidget *parent, int marginX = 16, int marginY = 4)
+	: RpWidget(parent)
+	, _marginX(marginX)
+	, _marginY(marginY) {
+		resize(width(), _marginY * 2 + 1);
+	}
+protected:
+	void paintEvent(QPaintEvent *e) override {
+		Painter p(this);
+		auto color = st::windowFg->c;
+		color.setAlphaF(0.08);
+		p.fillRect(QRect(_marginX, _marginY, width() - 2 * _marginX, 1), color);
+	}
+private:
+	int _marginX;
+	int _marginY;
+};
+
 constexpr auto kPlayStatusLimit = 12;
 
 [[nodiscard]] bool CanCheckSpecialEvent() {
@@ -346,7 +366,7 @@ MainMenu::MainMenu(
 	object_ptr<Ui::VerticalLayout>(_inner.get()))))
 , _shadow(_inner->add(object_ptr<Ui::SlideWrap<Ui::PlainShadow>>(
 	_inner.get(),
-	object_ptr<Ui::PlainShadow>(_inner.get()))))
+	object_ptr<Ui::PlainShadow>(_inner.get(), st::windowBgOver))))
 , _menu(_inner->add(
 	object_ptr<Ui::VerticalLayout>(_inner.get()),
 	{ 0, st::mainMenuSkip, 0, 0 }))
@@ -567,9 +587,7 @@ void MainMenu::setupArchive() {
 		tr::lng_archived_name(),
 		st::mainMenuButton,
 		{ &st::menuIconArchiveOpen });
-	inner->add(
-		object_ptr<Ui::PlainShadow>(inner),
-		{ 0, st::mainMenuSkip, 0, st::mainMenuSkip });
+	inner->add(object_ptr<DrawerSeparator>(inner, 16, 4));
 	button->setAcceptBoth(true);
 	button->clicks(
 	) | rpl::on_next([=](Qt::MouseButton which) {
@@ -726,9 +744,7 @@ void MainMenu::setupMenu() {
 		SetupMenuBots(_menu, controller);
 
 		if (settings.showMyProfileInDrawer() || settings.showBotsInDrawer())
-		_menu->add(
-			object_ptr<Ui::PlainShadow>(_menu),
-			{ 0, st::mainMenuSkip, 0, st::mainMenuSkip });
+		_menu->add(object_ptr<DrawerSeparator>(_menu, 16, 4));
 
 		if (settings.showNewGroupInDrawer())
 		AddMyChannelsBox(addAction(
