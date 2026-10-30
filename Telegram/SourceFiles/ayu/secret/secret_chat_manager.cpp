@@ -192,7 +192,7 @@ void Manager::discardChat(int32 chatId, bool deleteHistory) {
 	)).send();
 }
 
-void Manager::sendMessage(int32 chatId, const QString &text, int32 ttl) {
+void Manager::sendMessage(int32 chatId, const QString &text, MsgId localMsgId, int32 ttl) {
 	const auto secret = chat(chatId);
 	if (!secret || secret->state() != State::Ready) {
 		return;
@@ -229,9 +229,13 @@ void Manager::sendMessage(int32 chatId, const QString &text, int32 ttl) {
 		text,
 		messageTtl);
 	const auto partnerUser = _session->data().user(secret->partnerId());
+	const auto effectiveMsgId = localMsgId
+		? localMsgId
+		: _session->data().nextLocalMessageId();
+
 	insertLocalMessage(
 		partnerUser,
-		_session->data().nextLocalMessageId(),
+		effectiveMsgId,
 		base::unixtime::now(),
 		text,
 		true,
@@ -246,7 +250,11 @@ void Manager::sendMessage(int32 chatId, const QString &text, int32 ttl) {
 		inputChat,
 		MTP_long(randomId),
 		MTP_bytes(packet)
-	)).send();
+	)).done([=](const MTPmessages_SentEncryptedMessage &result) {
+		LOG(("Secret Chat: Message sent successfully!"));
+	}).fail([=](const MTP::Error &error) {
+		LOG(("Secret Chat: SendEncrypted error: %1").arg(error.type()));
+	}).send();
 }
 void Manager::sendMedia(int32 chatId, not_null<HistoryItem*> item, const QString &caption) {
 	const auto secret = chat(chatId);
@@ -318,7 +326,11 @@ void Manager::sendMedia(int32 chatId, not_null<HistoryItem*> item, const QString
 		inputChat,
 		MTP_long(randomId),
 		MTP_bytes(packet)
-	)).send();
+	)).done([=](const MTPmessages_SentEncryptedMessage &result) {
+		LOG(("Secret Chat: Media sent successfully!"));
+	}).fail([=](const MTP::Error &error) {
+		LOG(("Secret Chat: SendEncrypted media error: %1").arg(error.type()));
+	}).send();
 }
 
 void Manager::setChatTtl(int32 chatId, int32 ttl) {
@@ -389,6 +401,7 @@ void Manager::handleUpdateEncryption(const MTPDupdateEncryption &update) {
 		const auto chatId = data.vid().v;
 		if (const auto secret = chat(chatId)) {
 			if (secret->isCreator() && secret->state() == State::Waiting) {
+				secret->setAccessHash(uint64(data.vaccess_hash().v));
 				ensureDhConfig([=, g_b = bytes::make_vector(data.vg_a_or_b().v), expectedFp = uint64(data.vkey_fingerprint().v)](const DhConfig &dh) {
 					auto authKey = Crypto::ComputeAuthKey(
 						g_b,
@@ -402,6 +415,9 @@ void Manager::handleUpdateEncryption(const MTPDupdateEncryption &update) {
 							secret->setState(State::Ready);
 							saveSessionToDb(secret);
 							_chatUpdated.fire(secret.get());
+							LOG(("Secret Chat: Chat %1 is Ready!").arg(chatId));
+						} else {
+							LOG(("Secret Chat: AuthKey fingerprint mismatch: computed=%1, expected=%2").arg(computedFp).arg(expectedFp));
 						}
 					}
 				});
@@ -642,7 +658,7 @@ void Manager::insertLocalMessage(
 		msgId,
 		mtpMsg,
 		MessageFlag::HasFromId | (isOut ? MessageFlag::Outgoing : MessageFlag(0)),
-		isOut ? NewMessageType::Existing : NewMessageType::Unread);
+		NewMessageType::Unread);
 }
 
 } // namespace Ayu::Secret

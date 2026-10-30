@@ -4850,7 +4850,7 @@ void ApiWrap::sendMessage(
 		if (const auto user = peer->asUser()) {
 			if (const auto secret = _session->secretChats().chatForUser(user->id)) {
 				if (secret->state() == Ayu::Secret::State::Ready) {
-					_session->secretChats().sendMessage(secret->chatId(), sending.text);
+					_session->secretChats().sendMessage(secret->chatId(), sending.text, newId.msg);
 					isFirst = false;
 					continue;
 				}

@@ -784,6 +784,8 @@ void MainMenu::setupMenu() {
 					if (const auto user = thread->peer()->asUser()) {
 						if (!user->isSelf() && !user->isBot() && !user->isServiceUser()) {
 							controller->session().secretChats().requestChat(user);
+							controller->showPeerHistory(user, Window::SectionShow::Way::ClearStack);
+							controller->showToast(u"Secret chat requested. Waiting for %1 to connect..."_q.arg(user->shortName()));
 							return true;
 						}
 					}

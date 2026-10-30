@@ -47,7 +47,7 @@ public:
 	void acceptChat(int32 chatId);
 	void discardChat(int32 chatId, bool deleteHistory = true);
 
-	void sendMessage(int32 chatId, const QString &text, int32 ttl = 0);
+	void sendMessage(int32 chatId, const QString &text, MsgId localMsgId = MsgId(0), int32 ttl = 0);
 	void sendMedia(int32 chatId, not_null<HistoryItem*> item, const QString &caption);
 	void setChatTtl(int32 chatId, int32 ttl);
 

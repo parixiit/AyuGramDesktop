@@ -198,6 +198,11 @@ TopBarWidget::TopBarWidget(
 		updateControlsVisibility();
 	}, lifetime());
 
+	controller->session().secretChats().chatUpdated(
+	) | rpl::on_next([=] {
+		update();
+	}, lifetime());
+
 	_back->setAcceptBoth();
 	_back->addClickHandler([=](Qt::MouseButton) {
 		InvokeQueued(_back.data(), [=] { backClicked(); });
@@ -743,8 +748,9 @@ void TopBarWidget::paintTopBar(Painter &p) {
 
 		if (const auto user = namePeer->asUser()) {
 			if (user->session().secretChats().chatForUser(user->id)) {
-				const auto lockIcon = &st::menuIconLock;
-				lockIcon->paint(p, nameleft, nametop + (st::msgNameStyle.font->height - lockIcon->height()) / 2, width());
+				const auto lockIcon = &st::dialogsLockIcon.icon;
+				const auto iconTop = nametop + (st::msgNameStyle.font->height - lockIcon->height()) / 2;
+				lockIcon->paint(p, nameleft, iconTop, width());
 				nameleft += lockIcon->width() + st::dialogsChatTypeSkip;
 				namewidth -= lockIcon->width() + st::dialogsChatTypeSkip;
 			}

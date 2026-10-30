@@ -503,6 +503,8 @@ void AddSecretChatAction(PeerData *peerData,
 		.text = u"New Secret Chat"_q,
 		.handler = [=] {
 			sessionController->session().secretChats().requestChat(user);
+			sessionController->showPeerHistory(user, Window::SectionShow::Way::ClearStack);
+			sessionController->showToast(u"Secret chat requested. Waiting for %1 to connect..."_q.arg(user->shortName()));
 		},
 		.icon = &st::menuIconLock,
 	});

@@ -223,7 +223,7 @@ void SettingsNavWidget::setupTopBar() {
 
 void SettingsNavWidget::setupProfileCover() {
 	_cover.create(this);
-	_cover->resize(width(), 70);
+	_cover->resize(width(), 74);
 
 	_userpic.create(
 		_cover.data(),
@@ -232,18 +232,18 @@ void SettingsNavWidget::setupProfileCover() {
 		Ui::UserpicButton::Role::OpenPhoto,
 		Ui::UserpicButton::Source::PeerPhoto,
 		st::mainMenuUserpic);
-	_userpic->moveToLeft(16, 11);
+	_userpic->moveToLeft(16, 12);
 
 	_name.create(_cover.data(), _user->name(), st::infoProfileCover.name);
-	_name->moveToLeft(88, 13);
+	_name->moveToLeft(88, 11);
 
 	const auto username = !_user->username().isEmpty()
 		? ("@" + _user->username())
 		: !_user->phone().isEmpty()
 		? _user->phone()
 		: tr::lng_status_online(tr::now);
-	_status.create(_cover.data(), username, st::defaultFlatLabel);
-	_status->moveToLeft(88, 37);
+	_status.create(_cover.data(), username, st::infoProfileStatus);
+	_status->moveToLeft(88, 40);
 
 	_qrButton.create(_cover.data(), st::infoProfileLabeledButtonQr);
 	_qrButton->moveToRight(16, 16);
@@ -356,6 +356,8 @@ void SettingsNavWidget::setupCategories() {
 		_allButtons.push_back(btn);
 		return btn;
 	};
+
+	_content->add(object_ptr<NavSeparator>(_content, 16, 4));
 
 	addCategory(
 		&st::menuIconPremium,

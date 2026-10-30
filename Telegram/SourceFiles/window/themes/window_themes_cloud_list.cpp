@@ -480,6 +480,9 @@ rpl::producer<bool> CloudList::empty() const {
 rpl::producer<bool> CloudList::allShown() const {
 	using namespace rpl::mappers;
 
+	if (AyuSettings::getInstance().modernLayout()) {
+		return rpl::single(true);
+	}
 	return rpl::combine(
 		_showAll.value(),
 		_count.value(),
@@ -487,6 +490,9 @@ rpl::producer<bool> CloudList::allShown() const {
 }
 
 void CloudList::setup() {
+	if (AyuSettings::getInstance().modernLayout()) {
+		_showAll = true;
+	}
 	_group->setChangedCallback([=](int selected) {
 		if (AyuFeatures::MessageShot::isChoosingTheme()) {
 			return;
@@ -577,7 +583,8 @@ bool CloudList::applyChangesFrom(std::vector<Data::CloudTheme> &&list) {
 		return true;
 	}
 	auto changed = false;
-	const auto limit = _showAll.current() ? list.size() : kShowPerRow;
+	const auto isModern = AyuSettings::getInstance().modernLayout();
+	const auto limit = (isModern || _showAll.current()) ? list.size() : kShowPerRow;
 	ranges::stable_sort(list, std::less<>(), [](const Data::CloudTheme &t) {
 		return t.documentId ? 0 : 1;
 	});
