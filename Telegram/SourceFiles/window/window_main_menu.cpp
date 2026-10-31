@@ -395,7 +395,7 @@ MainMenu::MainMenu(
 	widthValue(
 	) | rpl::on_next([=](int width) {
 		const auto line = st::lineWidth;
-		shadow->setGeometry(0, st::mainMenuCoverHeight - line, width, line);
+		shadow->setGeometry(16, st::mainMenuCoverHeight - line, width - 32, line);
 	}, shadow->lifetime());
 
 	_nightThemeSwitch.setCallback([this] {

@@ -17,7 +17,7 @@ namespace Window::Theme { [[nodiscard]] bool IsNightMode(); }
 #include "data/data_user.h"
 #include "lang/lang_keys.h"
 #include "main/main_session.h"
-#include "settings/sections/settings_active_sessions.h"
+#include "settings/sections/settings_calls.h"
 #include "settings/sections/settings_advanced.h"
 #include "settings/sections/settings_chat.h"
 #include "settings/sections/settings_folders.h"
@@ -394,7 +394,7 @@ void SettingsNavWidget::setupCategories() {
 	addCategory(
 		&st::menuIconUnmute,
 		tr::lng_settings_section_devices(tr::now),
-		Settings::SessionsId());
+		Settings::CallsId());
 	addCategory(
 		&st::menuIconTranslate,
 		tr::lng_settings_language(tr::now),

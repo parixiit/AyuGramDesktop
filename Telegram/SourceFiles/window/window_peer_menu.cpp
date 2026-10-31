@@ -57,6 +57,9 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/widgets/labels.h"
 #include "ui/widgets/checkbox.h"
 #include "ui/widgets/popup_menu.h"
+#include "ui/widgets/menu/menu_item_base.h"
+#include "ui/painter.h"
+#include "window/themes/window_theme.h"
 #include "ui/widgets/menu/menu_add_action_callback_factory.h"
 #include "ui/layers/generic_box.h"
 #include "ui/delayed_activation.h"
@@ -597,7 +600,7 @@ void Filler::addToggleMuteSubmenu(bool addSeparator) {
 	}
 	PeerMenuAddMuteSubmenuAction(_controller, _thread, _addAction);
 	if (addSeparator) {
-		_addAction(PeerMenuCallback::Args{ .isSeparator = true });
+		PeerMenuAddSeparator(_addAction);
 	}
 }
 
@@ -1671,7 +1674,7 @@ void Filler::addTTLSubmenu(bool addSeparator) {
 			: QString());
 	_addAction(text, [=] { validator.showBox(); }, validator.icon());
 	if (addSeparator) {
-		_addAction(PeerMenuCallback::Args{ .isSeparator = true });
+		PeerMenuAddSeparator(_addAction);
 	}
 }
 
@@ -1735,7 +1738,7 @@ void Filler::addCreateTopic() {
 				forum->history()));
 		}
 	}, &st::menuIconDiscussion);
-	_addAction(PeerMenuCallback::Args{ .isSeparator = true });
+	PeerMenuAddSeparator(_addAction);
 }
 
 void Filler::addViewAsMessages() {
@@ -1869,7 +1872,7 @@ void Filler::fillChatsListActions() {
 	addNewMembers();
 	addBoostChat();
 	addVideoChat();
-	_addAction(PeerMenuCallback::Args{ .isSeparator = true });
+	PeerMenuAddSeparator(_addAction);
 	addReport();
 	if (_peer->asChannel()->amIn()) {
 		addLeaveChat();
@@ -2086,7 +2089,7 @@ void Filler::fillArchiveActions() {
 			_addAction);
 	}
 
-	_addAction({ .isSeparator = true });
+	PeerMenuAddSeparator(_addAction);
 
 	Settings::PreloadArchiveSettings(&controller->session());
 	const auto openSettings = [=] {
@@ -2141,7 +2144,7 @@ void Filler::addToggleFee() {
 			user,
 			removeFee);
 	}, feeRemoved ? &st::menuIconEarn : &st::menuIconCancelFee);
-	_addAction({ .isSeparator = true });
+	PeerMenuAddSeparator(_addAction);
 	_addAction({ .make = [=](not_null<Ui::PopupMenu*> menuParent) {
 		const auto actionParent = menuParent->menu();
 		const auto text = feeRemoved
@@ -4551,7 +4554,7 @@ void AddSenderUserpicModerateAction(
 			HistoryItemsList{ not_null<HistoryItem*>(moderateItem) });
 	if (canDeleteAndBan) {
 		const auto itemId = moderateItem->fullId();
-		addAction({ .isSeparator = true });
+		PeerMenuAddSeparator(addAction);
 		addAction({
 			.text = tr::lng_context_delete_and_ban(tr::now),
 			.handler = [=] {
@@ -4580,18 +4583,76 @@ void AddSenderUserpicModerateAction(
 	}
 }
 
-void AddSeparatorAndShiftUp(const PeerMenuCallback &addAction) {
+class PeerMenuSeparator final : public Ui::Menu::ItemBase {
+public:
+	PeerMenuSeparator(
+		not_null<Ui::Menu::Menu*> parent,
+		const style::Menu &st,
+		int paddingY = 4)
+	: ItemBase(parent, st)
+	, _paddingY(paddingY)
+	, _bg(st.itemBg)
+	, _height(_paddingY * 2 + 1)
+	, _action(new QAction(parent)) {
+		_action->setSeparator(true);
+		setEnabled(false);
+		fitToMenuWidth();
+		paintRequest(
+		) | rpl::on_next([=] {
+			Painter p(this);
+			p.fillRect(0, 0, width(), _height, _bg);
+			const auto color = Window::Theme::IsNightMode()
+				? QColor(255, 255, 255, 22)
+				: QColor(0, 0, 0, 20);
+			p.fillRect(0, _paddingY, width(), 1, color);
+		}, lifetime());
+	}
+
+	not_null<QAction*> action() const override {
+		return _action;
+	}
+	bool isEnabled() const override {
+		return false;
+	}
+
+protected:
+	int contentHeight() const override {
+		return _height;
+	}
+
+private:
+	int _paddingY = 4;
+	style::color _bg;
+	int _height = 9;
+	not_null<QAction*> _action;
+};
+
+[[nodiscard]] base::unique_qptr<Ui::Menu::ItemBase> CreatePeerMenuSeparator(
+		not_null<Ui::PopupMenu*> menu,
+		int paddingY = 4) {
+	return base::make_unique_q<PeerMenuSeparator>(
+		menu->menu(),
+		menu->st().menu,
+		paddingY);
+}
+
+void PeerMenuAddSeparator(const PeerMenuCallback &addAction, int paddingY) {
 	addAction({
-		.separatorSt = &st::popupMenuExpandedSeparator.menu.separator,
+		.make = [=](not_null<Ui::PopupMenu*> menu) {
+			return CreatePeerMenuSeparator(menu, paddingY);
+		},
 	});
+}
+
+void AddSeparatorAndShiftUp(const PeerMenuCallback &addAction) {
+	PeerMenuAddSeparator(addAction, 4);
 
 	const auto &st = st::popupMenuExpandedSeparator.menu;
 	const auto shift = st::popupMenuExpandedSeparator.scrollPadding.top()
 		+ st.itemPadding.top()
 		+ st.itemStyle.font->height
 		+ st.itemPadding.bottom()
-		+ st.separator.padding.top()
-		+ st.separator.width / 2;
+		+ 4;
 	addAction({ .addTopShift = -shift });
 }
 

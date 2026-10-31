@@ -53,9 +53,9 @@ dialogsSendingIcon: ThreeStateIcon {
 	active: icon {{ "dialogs/dialogs_sending", dialogsSendingIconFgActive, point(8px, 4px) }};
 }
 dialogsLockIcon: ThreeStateIcon {
-	icon: icon {{ "chat/mini_lock", dialogsChatIconFg, point(1px, 3px) }};
-	over: icon {{ "chat/mini_lock", dialogsChatIconFgOver, point(1px, 3px) }};
-	active: icon {{ "chat/mini_lock", dialogsChatIconFgActive, point(1px, 3px) }};
+	icon: icon {{ "dialogs/dialogs_lock", dialogsChatIconFg, point(1px, 3px) }};
+	over: icon {{ "dialogs/dialogs_lock", dialogsChatIconFgOver, point(1px, 3px) }};
+	active: icon {{ "dialogs/dialogs_lock", dialogsChatIconFgActive, point(1px, 3px) }};
 }
 dialogsVerifiedColorsActive: VerifiedBadge(dialogsVerifiedColors) {
 	color: dialogsVerifiedIconBgActive;
