@@ -447,7 +447,7 @@ QImage SettingsSlider::prepareRippleMask(
 }
 
 void SettingsSlider::paintEvent(QPaintEvent *e) {
-	if (_sections.empty()) {
+	if (!getSectionsCount()) {
 		return;
 	}
 
