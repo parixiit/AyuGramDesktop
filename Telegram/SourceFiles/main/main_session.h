@@ -84,9 +84,6 @@ namespace Ui {
 struct ColorIndicesCompressed;
 } // namespace Ui
 
-namespace Ayu::Secret {
-class Manager;
-} // namespace Ayu::Secret
 
 namespace Main {
 
@@ -259,9 +256,6 @@ public:
 	[[nodiscard]] MTP::DcId mainDcId() const;
 	[[nodiscard]] MTP::Instance &mtp() const;
 	[[nodiscard]] const MTP::ConfigFields &serverConfig() const;
-	[[nodiscard]] Ayu::Secret::Manager &secretChats() const {
-		return *_secretChats;
-	}
 
 	[[nodiscard]] ApiWrap &api() {
 		return *_api;
@@ -328,7 +322,6 @@ private:
 	// _data depends on _downloader / _uploader.
 	const std::unique_ptr<Data::Session> _data;
 	const not_null<UserData*> _user;
-	const std::unique_ptr<Ayu::Secret::Manager> _secretChats;
 
 	// _emojiStickersPack depends on _data.
 	const std::unique_ptr<Stickers::EmojiPack> _emojiStickersPack;

@@ -1925,7 +1925,6 @@ void Filler::fillContextMenuActions() {
 	addBanFromChannel();
 	addClearHistory();
 	AyuUi::AddDeleteOwnMessagesAction(_peer, _topic, _controller, _addAction);
-	AyuUi::AddSecretChatAction(_peer, _controller, _addAction);
 	addDeleteChat();
 	addLeaveChat();
 	addDeleteTopic();
@@ -1938,7 +1937,6 @@ void Filler::fillHistoryActions() {
 	addInfo();
 	AyuUi::AddJumpToBeginningAction(_peer, _thread, _controller, _addAction);
 	AyuUi::AddOpenChannelAction(_peer, _controller, _addAction);
-	AyuUi::AddSecretChatAction(_peer, _controller, _addAction);
 	addViewAsTopics();
 	addManageChat();
 	addStoryArchive();
@@ -1977,7 +1975,6 @@ void Filler::fillProfileActions() {
 	addToggleTopicClosed();
 	AyuUi::AddOpenChannelAction(_peer, _controller, _addAction);
 	AyuUi::AddShadowBanAction(_peer, _addAction);
-	AyuUi::AddSecretChatAction(_peer, _controller, _addAction);
 	addViewDiscussion();
 	addDirectMessages();
 	addExportChat();

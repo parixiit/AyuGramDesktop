@@ -7,7 +7,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "apiwrap.h"
 
-#include "ayu/secret/secret_chat_manager.h"
 
 #include "api/api_authorizations.h"
 #include "api/api_attached_stickers.h"
@@ -4847,15 +4846,6 @@ void ApiWrap::sendMessage(
 
 		TextUtilities::Trim(sending);
 
-		if (const auto user = peer->asUser()) {
-			if (const auto secret = _session->secretChats().chatForUser(user->id)) {
-				if (secret->state() == Ayu::Secret::State::Ready) {
-					_session->secretChats().sendMessage(secret->chatId(), sending.text, newId.msg);
-					isFirst = false;
-					continue;
-				}
-			}
-		}
 
 		_session->data().registerMessageRandomId(randomId, newId);
 		_session->data().registerMessageSentData(
@@ -5436,15 +5426,6 @@ void ApiWrap::sendMediaWithRandomId(
 		| (options.invertCaption ? Flag::f_invert_media : Flag(0))
 		| (starsPaid ? Flag::f_allow_paid_stars : Flag(0));
 
-	if (const auto user = peer->asUser()) {
-		if (const auto secret = _session->secretChats().chatForUser(user->id)) {
-			if (secret->state() == Ayu::Secret::State::Ready) {
-				_session->secretChats().sendMedia(secret->chatId(), item, caption.text);
-				if (done) done(true);
-				return;
-			}
-		}
-	}
 
 	auto &histories = history->owner().histories();
 	const auto itemId = item->fullId();

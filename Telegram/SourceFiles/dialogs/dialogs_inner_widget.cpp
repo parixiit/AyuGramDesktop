@@ -23,7 +23,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "history/view/history_view_context_menu.h"
 #include "history/view/history_view_subsection_tabs.h"
 #include "history/history.h"
-#include "ayu/secret/secret_chat_manager.h"
 #include "history/history_item.h"
 #include "core/application.h"
 #include "core/click_handler_types.h"
@@ -536,10 +535,6 @@ InnerWidget::InnerWidget(
 		refreshDialogRow({ update.item->history(), update.item->fullId() });
 	}, lifetime());
 
-	session().secretChats().chatUpdated(
-	) | rpl::on_next([=] {
-		update();
-	}, lifetime());
 
 	session().changes().entryUpdates(
 		Data::EntryUpdate::Flag::Repaint

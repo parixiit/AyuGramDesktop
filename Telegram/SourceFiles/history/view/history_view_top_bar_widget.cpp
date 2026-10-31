@@ -7,7 +7,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "history/view/history_view_top_bar_widget.h"
 
-#include "ayu/secret/secret_chat_manager.h"
 #include "styles/style_menu_icons.h"
 
 #include "history/history.h"
@@ -70,7 +69,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_chat_participants.h"
 #include "styles/style_window.h"
 #include "styles/style_dialogs.h"
-#include "styles/style_dialogs_layout.h"
 #include "styles/style_chat.h"
 #include "styles/style_info.h"
 
@@ -199,10 +197,6 @@ TopBarWidget::TopBarWidget(
 		updateControlsVisibility();
 	}, lifetime());
 
-	controller->session().secretChats().chatUpdated(
-	) | rpl::on_next([=] {
-		update();
-	}, lifetime());
 
 	_back->setAcceptBoth();
 	_back->addClickHandler([=](Qt::MouseButton) {
@@ -722,15 +716,6 @@ void TopBarWidget::paintTopBar(Painter &p) {
 			const auto skip = _titleBadge.drawVerified(p, position, st::dialogsVerifiedColors);
 			nameleft += skip + st::dialogsChatTypeSkip;
 			namewidth -= skip + st::dialogsChatTypeSkip;
-		}
-		if (const auto user = namePeer->asUser()) {
-			if (user->session().secretChats().chatForUser(user->id)) {
-				const auto lockIcon = &st::dialogsLockIcon.icon;
-				const auto iconTop = nametop + (st::msgNameStyle.font->height - lockIcon->height()) / 2;
-				lockIcon->paint(p, nameleft, iconTop, width());
-				nameleft += lockIcon->width() + 5;
-				namewidth -= lockIcon->width() + 5;
-			}
 		}
 
 		const auto badgeWidth = _titleBadge.drawGetWidth(p, {

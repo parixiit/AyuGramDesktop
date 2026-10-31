@@ -120,14 +120,6 @@ set(ayugram_files
         ayu/ayu_lang.h
         ayu/ayu_infra.cpp
         ayu/ayu_infra.h
-        ayu/secret/secret_chat.cpp
-        ayu/secret/secret_chat.h
-        ayu/secret/secret_chat_crypto.cpp
-        ayu/secret/secret_chat_crypto.h
-        ayu/secret/secret_chat_layer.cpp
-        ayu/secret/secret_chat_layer.h
-        ayu/secret/secret_chat_manager.cpp
-        ayu/secret/secret_chat_manager.h
         ayu/utils/ayu_mapper.cpp
         ayu/utils/ayu_mapper.h
         ayu/utils/qt_key_modifiers_extended.h

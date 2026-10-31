@@ -6,7 +6,6 @@
 // Copyright @Radolyn, 2026
 #include "ayu/ui/context_menu/context_menu.h"
 
-#include "ayu/secret/secret_chat_manager.h"
 
 #include "apiwrap.h"
 #include "lang_auto.h"
@@ -488,50 +487,6 @@ void AddDeleteOwnMessagesAction(PeerData *peerData,
 		&st::menuIconTTL);
 }
 
-void AddSecretChatAction(PeerData *peerData,
-						 not_null<Window::SessionController*> sessionController,
-						 const Window::PeerMenuCallback &addCallback) {
-	if (!peerData) {
-		return;
-	}
-	const auto user = peerData->asUser();
-	if (!user || user->isSelf() || user->isBot() || user->isServiceUser()) {
-		return;
-	}
-
-	if (const auto secret = sessionController->session().secretChats().activeChatForUser(user->id)) {
-		const auto isWaiting = (secret->state() == Ayu::Secret::State::Waiting);
-		addCallback(Window::PeerMenuCallback::Args{
-			.text = isWaiting ? u"Cancel Secret Chat"_q : u"End Secret Chat"_q,
-			.handler = [=] {
-				sessionController->show(Ui::MakeConfirmBox({
-					.text = isWaiting
-						? u"Are you sure you want to cancel the secret chat request with %1?"_q.arg(user->shortName())
-						: u"Are you sure you want to end this secret chat with %1?"_q.arg(user->shortName()),
-					.confirmed = [=](Fn<void()> &&close) {
-						sessionController->session().secretChats().discardChat(secret->chatId(), true);
-						sessionController->showToast(isWaiting ? u"Secret chat cancelled."_q : u"Secret chat ended."_q);
-						close();
-					},
-					.confirmText = isWaiting ? u"Cancel Secret Chat"_q : u"End Secret Chat"_q,
-					.confirmStyle = &st::attentionBoxButton,
-				}));
-			},
-			.icon = &st::menuIconDelete,
-		});
-		return;
-	}
-
-	addCallback(Window::PeerMenuCallback::Args{
-		.text = u"New Secret Chat"_q,
-		.handler = [=] {
-			sessionController->session().secretChats().requestChat(user);
-			sessionController->showPeerHistory(user, Window::SectionShow::Way::ClearStack);
-			sessionController->showToast(u"Secret chat requested. Waiting for %1 to connect..."_q.arg(user->shortName()));
-		},
-		.icon = &st::menuIconLock,
-	});
-}
 
 void AddHistoryAction(not_null<Ui::PopupMenu*> menu, HistoryItem *item) {
 	if (item->hideEditedBadge()) {

@@ -7,7 +7,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "window/window_main_menu.h"
 
-#include "ayu/secret/secret_chat_manager.h"
 
 #include "apiwrap.h"
 #include "base/event_filter.h"
@@ -772,26 +771,6 @@ void MainMenu::setupMenu() {
 			if (which == Qt::LeftButton) {
 				controller->showNewChannel();
 			}
-		});
-
-		addAction(
-			rpl::single(u"New Secret Chat"_q),
-			{ &st::menuIconLock }
-		)->setClickedCallback([=] {
-			Window::ShowChooseRecipientBox(
-				controller,
-				[=](not_null<Data::Thread*> thread) {
-					if (const auto user = thread->peer()->asUser()) {
-						if (!user->isSelf() && !user->isBot() && !user->isServiceUser()) {
-							controller->session().secretChats().requestChat(user);
-							controller->showPeerHistory(user, Window::SectionShow::Way::ClearStack);
-							controller->showToast(u"Secret chat requested. Waiting for %1 to connect..."_q.arg(user->shortName()));
-							return true;
-						}
-					}
-					return false;
-				},
-				rpl::single(u"New Secret Chat"_q));
 		});
 
 		if (settings.showContactsInDrawer())
