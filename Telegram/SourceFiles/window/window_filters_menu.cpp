@@ -715,6 +715,7 @@ base::unique_qptr<Ui::SideBarButton> FiltersMenu::prepareButton(
 				&_session->session(),
 				std::nullopt));
 		} else if (id >= 0) {
+			_session->window().hideSettingsAndLayer();
 			_session->setActiveChatsFilter(id);
 		} else {
 			openFiltersSettings();

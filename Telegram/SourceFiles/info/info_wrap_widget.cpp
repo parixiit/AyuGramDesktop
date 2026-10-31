@@ -1251,23 +1251,12 @@ const Ui::RoundRect *WrapWidget::bottomSkipRounding() const {
 }
 
 bool WrapWidget::hasBackButton() const {
-	if (AyuSettings::getInstance().modernLayout()
-		&& _controller->section().type() == Section::Type::Settings) {
-		return hasStackHistory();
-	}
 	return !_isSeparatedWindow
 		&& (wrap() == Wrap::Narrow || hasStackHistory());
 }
 
 bool WrapWidget::willHaveBackButton(
 		const Window::SectionShow &params) const {
-	if (AyuSettings::getInstance().modernLayout()
-		&& _controller->section().type() == Section::Type::Settings) {
-		const auto willSaveToStack = (_content != nullptr)
-			&& (params.way == Window::SectionShow::Way::Forward);
-		const auto willClearStack = (params.way == Window::SectionShow::Way::ClearStack);
-		return !willClearStack && (hasStackHistory() || willSaveToStack);
-	}
 	using Way = Window::SectionShow::Way;
 	const auto willSaveToStack = (_content != nullptr)
 		&& (params.way == Way::Forward);

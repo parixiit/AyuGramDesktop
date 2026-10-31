@@ -106,7 +106,6 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 // AyuGram includes
 #include "ayu/ayu_settings.h"
 #include "ayu/features/forward/ayu_forward.h"
-#include "ayu/ui/settings/settings_nav_widget.h"
 #include "info/info_controller.h"
 #include "info/info_section_widget.h"
 #include "info/info_wrap_widget.h"
@@ -1694,7 +1693,6 @@ void MainWidget::showHistory(
 
 	updateMainSectionShown();
 	updateControlsGeometry();
-	updateSettingsNavVisibility();
 
 	if (noPeer) {
 		_controller->setActiveChatEntry(Dialogs::Key());
@@ -1886,7 +1884,6 @@ void MainWidget::showSection(
 		if (const auto entry = _mainSection->activeChat(); entry.key) {
 			_controller->setActiveChatEntry(entry);
 		}
-		updateSettingsNavVisibility();
 		return;
 	//
 	// Now third section handles only its own showSection() requests.
@@ -2143,7 +2140,6 @@ void MainWidget::showNewSection(
 		settingSection->showFast();
 	}
 
-	updateSettingsNavVisibility();
 	floatPlayerCheckVisibility();
 	orderWidgets();
 }
@@ -2166,68 +2162,6 @@ void MainWidget::checkMainSectionToLayer() {
 	updateMainSectionShown();
 }
 
-void MainWidget::setupSettingsNav() {
-	if (_settingsNav) {
-		return;
-	}
-	_settingsNav.create(this, _controller);
-	_settingsNav->setCloseCallback([=] {
-		closeSettings();
-	});
-	_settingsNav->hide();
-}
-
-void MainWidget::closeSettings() {
-	if (_settingsNav) {
-		_settingsNav->hide();
-	}
-	if (_dialogs) {
-		_dialogs->show();
-	}
-	if (_mainSection) {
-		_mainSection.destroy();
-	}
-	_controller->setActiveChatEntry(Dialogs::Key());
-	updateMainSectionShown();
-	updateControlsGeometry();
-	if (_history) {
-		_history->show();
-	}
-	setInnerFocus();
-}
-
-void MainWidget::updateSettingsNavVisibility() {
-	if (!AyuSettings::getInstance().modernLayout()) {
-		if (_settingsNav && !_settingsNav->isHidden()) {
-			_settingsNav->hide();
-			if (_dialogs) {
-				_dialogs->show();
-			}
-		}
-		return;
-	}
-	const auto infoSection = dynamic_cast<Info::SectionWidget*>(_mainSection.data());
-	const auto wrap = infoSection ? infoSection->wrapWidget().get() : nullptr;
-	const auto isSettings = wrap
-		&& (wrap->controller()->section().type() == Info::Section::Type::Settings);
-	if (isSettings) {
-		setupSettingsNav();
-		if (_dialogs && !_dialogs->isHidden()) {
-			_dialogs->hide();
-		}
-		if (_settingsNav->isHidden()) {
-			_settingsNav->show();
-		}
-		_settingsNav->raise();
-		_settingsNav->setGeometryToLeft(0, 0, _dialogsWidth, height());
-		_settingsNav->setActiveType(wrap->controller()->section().settingsType());
-	} else if (_settingsNav && !_settingsNav->isHidden()) {
-		_settingsNav->hide();
-		if (_dialogs && !isOneColumn()) {
-			_dialogs->show();
-		}
-	}
-}
 
 Window::SeparateId MainWidget::windowId() const {
 	return _controller->windowId();
@@ -2485,9 +2419,6 @@ void MainWidget::orderWidgets() {
 	if (_dialogs) {
 		_dialogs->raiseWithTooltip();
 	}
-	if (_settingsNav && !_settingsNav->isHidden()) {
-		_settingsNav->raise();
-	}
 	if (_player) {
 		_player->raise();
 	}
@@ -2640,9 +2571,6 @@ int MainWidget::getThirdSectionTop() const {
 void MainWidget::hideAll() {
 	if (_dialogs) {
 		_dialogs->hide();
-	}
-	if (_settingsNav) {
-		_settingsNav->hide();
 	}
 	_history->hide();
 	if (_mainSection) {
@@ -2844,9 +2772,6 @@ void MainWidget::updateControlsGeometry() {
 				dialogsWidth,
 				width() - st::columnMinimalWidthMain);
 			_dialogs->setGeometryToLeft(0, 0, dialogsWidth, height());
-		}
-		if (_settingsNav && !_settingsNav->isHidden()) {
-			_settingsNav->setGeometryToLeft(0, 0, dialogsWidth, height());
 		}
 		if (_sideShadow) {
 			_sideShadow->setGeometryToLeft(
@@ -3209,11 +3134,6 @@ void MainWidget::handleAdaptiveLayoutUpdate() {
 
 void MainWidget::handleHistoryBack() {
 	if (_mainSection && _mainSection->showBackInternal()) {
-		updateSettingsNavVisibility();
-		return;
-	}
-	if (_settingsNav && !_settingsNav->isHidden()) {
-		closeSettings();
 		return;
 	}
 	const auto openedFolder = _controller->openedFolder().current();

@@ -1486,9 +1486,6 @@ void SessionNavigation::showByInitialId(
 void SessionNavigation::showSettings(
 		Settings::Type type,
 		const SectionShow &params) {
-	if (AyuSettings::getInstance().modernLayout() && type == Settings::MainId()) {
-		type = Settings::ChatId();
-	}
 	showSection(
 		std::make_shared<Info::Memento>(
 			Info::Settings::Tag{ _session->user() },
@@ -3334,6 +3331,7 @@ void SessionController::setActiveChatsFilter(
 		closeFolder();
 		closeCommunity();
 	}
+	_window->hideSettingsAndLayer();
 	if (adaptive().isOneColumn()) {
 		clearSectionStack(params);
 	}
