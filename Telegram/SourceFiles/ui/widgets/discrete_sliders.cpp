@@ -122,7 +122,11 @@ void DiscreteSlider::addSection(
 }
 
 void DiscreteSlider::setSections(const std::vector<QString> &labels) {
-	Assert(!labels.empty());
+	if (labels.empty()) {
+		_sections.clear();
+		refresh();
+		return;
+	}
 
 	_sections.clear();
 	for (const auto &label : labels) {
@@ -135,7 +139,12 @@ void DiscreteSlider::setSections(
 		const std::vector<TextWithEntities> &labels,
 		Text::MarkedContext context,
 		Fn<bool()> paused) {
-	Assert(!labels.empty());
+	if (labels.empty()) {
+		_sections.clear();
+		_paused = std::move(paused);
+		refresh();
+		return;
+	}
 
 	context.repaint = [this] { update(); };
 
@@ -345,6 +354,9 @@ void SettingsSlider::resizeSections(int newWidth) {
 
 std::vector<float64> SettingsSlider::countSectionsWidths(int newWidth) const {
 	const auto count = getSectionsCount();
+	if (!count) {
+		return {};
+	}
 	const auto sectionsWidth = newWidth
 		- 2 * _st.padding
 		- (count - 1) * _st.barSkip;
@@ -435,6 +447,10 @@ QImage SettingsSlider::prepareRippleMask(
 }
 
 void SettingsSlider::paintEvent(QPaintEvent *e) {
+	if (_sections.empty()) {
+		return;
+	}
+
 	auto p = QPainter(this);
 
 	const auto clip = e->rect();

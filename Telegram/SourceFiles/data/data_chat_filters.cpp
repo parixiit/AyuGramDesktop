@@ -546,7 +546,7 @@ void ChatFilters::received(const QVector<MTPDialogFilter> &list) {
 		applyRemove(position);
 		changed = true;
 	}
-	if (!settings.hideAllChatsFolder() && !ranges::contains(begin(_list), end(_list), 0, &ChatFilter::id)) {
+	if (_list.empty() || (!settings.hideAllChatsFolder() && !ranges::contains(begin(_list), end(_list), 0, &ChatFilter::id))) {
 		_list.insert(begin(_list), ChatFilter());
 	}
 	if (changed || !_loaded || _reloading) {
@@ -743,6 +743,9 @@ void ChatFilters::applyRemove(int position) {
 	const auto i = begin(_list) + position;
 	auto filter = std::move(*i);
 	_list.erase(i);
+	if (_list.empty()) {
+		_list.insert(begin(_list), ChatFilter());
+	}
 	applyChange(filter, ChatFilter(filter.id(), {}, {}, {}, {}, {}, {}, {}));
 }
 
@@ -946,7 +949,7 @@ FilterId ChatFilters::defaultId() const {
 
 FilterId ChatFilters::lookupId(int index) const {
 	// Expects(index >= 0 && index < _list.size());
-	if (!(index >= 0 && index < _list.size())) {
+	if (_list.empty() || !(index >= 0 && index < _list.size())) {
 		return FilterId(); // AyuGram: fix crash when using `hideAllChatsFolder`
 	}
 
