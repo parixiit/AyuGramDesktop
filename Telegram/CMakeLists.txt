@@ -161,6 +161,8 @@ set(ayugram_files
         ayu/ui/settings/settings_filters.h
         ayu/ui/settings/settings_main.cpp
         ayu/ui/settings/settings_main.h
+        ayu/ui/settings/settings_nav_widget.cpp
+        ayu/ui/settings/settings_nav_widget.h
         ayu/ui/text_selection_flyout.cpp
         ayu/ui/text_selection_flyout.h
         ayu/ui/settings/settings_other.cpp
