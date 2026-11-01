@@ -30,6 +30,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "main/main_account.h" // Account::sessionValue.
 #include "main/main_domain.h"
 #include "mainwidget.h"
+#include "ayu/ayu_settings.h"
 #include "ui/boxes/confirm_box.h"
 #include "boxes/connection_box.h"
 #include "storage/storage_account.h"
@@ -463,6 +464,9 @@ void MainWindow::ui_hideSettingsAndLayer(anim::type animated) {
 		destroyLayer();
 	} else if (_layer) {
 		_layer->hideAll(animated);
+	}
+	if (_main && AyuSettings::getInstance().modernLayout()) {
+		_main->closeSettingsSection();
 	}
 }
 

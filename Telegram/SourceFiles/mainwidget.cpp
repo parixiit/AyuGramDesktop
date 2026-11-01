@@ -2164,13 +2164,16 @@ void MainWidget::checkMainSectionToLayer() {
 
 void MainWidget::closeSettingsSection() {
 	const auto infoSection = dynamic_cast<Info::SectionWidget*>(_mainSection.data());
-	const auto wrap = infoSection ? infoSection->wrapWidget().get() : nullptr;
+	const auto wrap = infoSection ? infoSection->wrapWidget() : nullptr;
 	const auto isSettings = wrap
 		&& (wrap->controller()->section().type() == Info::Section::Type::Settings);
 	if (isSettings) {
 		_mainSection.destroy();
 		updateMainSectionShown();
 		updateControlsGeometry();
+		if (_history) {
+			_history->show();
+		}
 	}
 }
 

@@ -35,7 +35,7 @@ public:
 		Wrap wrap,
 		not_null<MoveMemento*> memento);
 
-	[[nodiscard]] not_null<WrapWidget*> wrapWidget() const;
+	[[nodiscard]] WrapWidget *wrapWidget() const;
 
 	Dialogs::RowDescriptor activeChat() const override;
 

@@ -2140,6 +2140,7 @@ void Widget::toggleFiltersMenu(bool enabled) {
 			_chatFilters.get(),
 			&session(),
 			[this](FilterId id) {
+				controller()->content()->closeSettingsSection();
 				if (controller()->activeChatsFilterCurrent() != id) {
 					controller()->setActiveChatsFilter(id);
 				} else {
