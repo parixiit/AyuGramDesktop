@@ -351,8 +351,8 @@ public:
 	[[nodiscard]] bool crashReporting() const { return _crashReporting.current(); }
 	[[nodiscard]] int avatarCorners() const { return _avatarCorners.current(); }
 	[[nodiscard]] bool singleCornerRadius() const { return _singleCornerRadius.current(); }
-	[[nodiscard]] bool showTopBarAvatar() const { return _showTopBarAvatar.current(); }
-	[[nodiscard]] bool roundedInnerCorners() const { return _roundedInnerCorners.current(); }
+	[[nodiscard]] bool showTopBarAvatar() const { return true; }
+	[[nodiscard]] bool roundedInnerCorners() const { return true; }
 	[[nodiscard]] bool bypassContentProtection() const { return _bypassContentProtection.current(); }
 	[[nodiscard]] bool permanentViewOnceMedia() const { return _permanentViewOnceMedia.current(); }
 	[[nodiscard]] bool modernLayout() const { return _modernLayout.current(); }

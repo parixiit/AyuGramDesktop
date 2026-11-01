@@ -1312,8 +1312,8 @@ void from_json(const nlohmann::json &j, AyuSettings &s) {
 	s._crashReporting = j.value("crashReporting", defaults._crashReporting.current());
 	s._avatarCorners = j.value("avatarCorners", defaults._avatarCorners.current());
 	s._singleCornerRadius = j.value("singleCornerRadius", defaults._singleCornerRadius.current());
-	s._showTopBarAvatar = j.value("showTopBarAvatar", defaults._showTopBarAvatar.current());
-	s._roundedInnerCorners = j.value("roundedInnerCorners", defaults._roundedInnerCorners.current());
+	s._showTopBarAvatar = true;
+	s._roundedInnerCorners = true;
 	s._bypassContentProtection = j.value("bypassContentProtection", defaults._bypassContentProtection.current());
 	s._permanentViewOnceMedia = j.value("permanentViewOnceMedia", defaults._permanentViewOnceMedia.current());
 	s._modernLayout = j.value("modernLayout", defaults._modernLayout.current());
