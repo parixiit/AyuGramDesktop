@@ -67,6 +67,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_chat_participants.h"
 #include "styles/style_window.h"
 #include "styles/style_dialogs.h"
+#include "styles/style_menu_icons.h"
 #include "styles/style_chat.h"
 #include "styles/style_info.h"
 
@@ -290,6 +291,13 @@ TopBarWidget::TopBarWidget(
 	Core::App().settings().proxy().connectionTypeValue(
 	) | rpl::on_next([=] {
 		updateConnectingState();
+	}, lifetime());
+
+	AyuSettings::getInstance().showTopBarAvatarChanges(
+	) | rpl::on_next([=] {
+		updateControlsVisibility();
+		updateControlsGeometry();
+		update();
 	}, lifetime());
 
 	setCursor(style::cur_pointer);
@@ -1160,7 +1168,9 @@ void TopBarWidget::updateInfoButtonVisibility() {
 	}
 	const auto shown = (communityChatsListBar() && !rootChatsListBar())
 		? communityUserpicShown()
-		: (_controller->adaptive().isOneColumn() || !_primaryWindow);
+		: (_controller->adaptive().isOneColumn()
+			|| !_primaryWindow
+			|| AyuSettings::getInstance().showTopBarAvatar());
 	_info->setVisible(!_chooseForReportReason && shown);
 }
 
@@ -1257,7 +1267,9 @@ void TopBarWidget::updateControlsGeometry() {
 		_cancelChoose->moveToLeft(_leftTaken, otherButtonsTop);
 		_leftTaken += _cancelChoose->width();
 	} else if (_back->isHidden()) {
-		_leftTaken = st::topBarArrowPadding.right();
+		_leftTaken = (_info && !_info->isHidden())
+			? st::topBarActionSkip
+			: st::topBarArrowPadding.right();
 	} else {
 		_leftTaken = anim::interpolate(
 			0,

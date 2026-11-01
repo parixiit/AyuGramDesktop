@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #pragma once
 
 #include "base/flags.h"
+#include "settings/settings_type.h"
 
 template <typename Flags>
 struct EditFlagsDescriptor;
@@ -23,6 +24,8 @@ class RpWidget;
 } // namespace Ui
 
 namespace Settings {
+
+[[nodiscard]] Type PowerSavingId();
 
 void PowerSavingBox(
 	not_null<Ui::GenericBox*> box,

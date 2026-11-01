@@ -847,6 +847,15 @@ Webrtc::VideoTrack *AddCameraSubsection(
 		}
 	}, lifetime);
 
+	lifetime.add([=] {
+		track->setState(VideoState::Inactive);
+		if (const auto capturer = *capturerOwner) {
+			capturer->setOutput(nullptr);
+			capturer->setState(tgcalls::VideoState::Inactive);
+			*capturerOwner = nullptr;
+		}
+	});
+
 	return track;
 }
 

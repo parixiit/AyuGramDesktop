@@ -275,7 +275,7 @@ not_null<Ui::RpWidget*> AddChatFiltersTabsStrip(
 			const auto filters = &session->data().chatsFilters();
 			const auto &list = filters->list();
 			if (!session->user()->isPremium()) {
-				if (list[0].id() != FilterId()) {
+				if (!list.empty() && list[0].id() != FilterId()) {
 					filters->moveAllToFront();
 				}
 			}
@@ -381,13 +381,20 @@ not_null<Ui::RpWidget*> AddChatFiltersTabsStrip(
 	};
 
 	const auto filterByIndex = [=](int index) -> const Data::ChatFilter& {
+		static const auto emptyFilter = Data::ChatFilter();
 		const auto &list = session->data().chatsFilters().list();
-		Assert(index >= 0 && index < list.size());
+		if (index < 0 || index >= list.size()) {
+			return emptyFilter;
+		}
 		return list[index];
 	};
 
 	const auto rebuild = [=] {
 		const auto &list = session->data().chatsFilters().list();
+		if (list.empty()) {
+			wrap->toggle(false, anim::type::instant);
+			return;
+		}
 		if ((list.size() <= 1 && !slider->width()) || state->ignoreRefresh) {
 			return;
 		}
@@ -448,7 +455,7 @@ not_null<Ui::RpWidget*> AddChatFiltersTabsStrip(
 			const auto lookingId = state->lastFilterId.value_or(
 				trackActiveFilterAndUnreadAndReorder
 					? controller->activeChatsFilterCurrent()
-					: list[0].id());
+					: (list.empty() ? FilterId() : list[0].id()));
 			for (auto i = 0; i < list.size(); i++) {
 				const auto &filter = list[i];
 				if (filter.id() == lookingId) {
@@ -464,7 +471,7 @@ not_null<Ui::RpWidget*> AddChatFiltersTabsStrip(
 					return;
 				}
 			}
-			if (list.size()) {
+			if (!list.empty()) {
 				const auto index = 0;
 				const auto &filter = filterByIndex(index);
 				state->lastFilterId = filter.id();

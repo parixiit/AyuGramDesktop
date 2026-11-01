@@ -1,0 +1,25 @@
+name: Upload Release Asset
+
+on:
+  workflow_dispatch:
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Artifact from Run
+        uses: actions/download-artifact@v4
+        with:
+          name: ayugram-linux-x86_64
+          run-id: 40493636166
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rename and Upload to Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ls -la
+          mv ayugram-linux-x86_64.tar.gz AyuGram-Linux-x86_64.tar.gz 2>/dev/null || true
+          gh release upload v7.2.9-enhanced AyuGram-Linux-x86_64.tar.gz --repo parixiit/AyuGramDesktop --clobber

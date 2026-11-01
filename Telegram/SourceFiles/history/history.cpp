@@ -2096,12 +2096,14 @@ void History::calculateFirstUnreadMessage() {
 }
 
 bool History::readInboxTillNeedsRequest(MsgId tillId) {
-	Expects(!tillId || IsServerMsgId(tillId));
-
 	readClientSideMessages();
 	if (unreadMark()) {
 		owner().histories().changeDialogUnreadMark(this, false);
 	}
+	if (tillId && !IsServerMsgId(tillId)) {
+		return false;
+	}
+	Expects(!tillId || IsServerMsgId(tillId));
 	DEBUG_LOG(("Reading: readInboxTillNeedsRequest is_server %1, before %2."
 		).arg(Logs::b(IsServerMsgId(tillId))
 		).arg(_inboxReadBefore.value_or(-666).bare));
@@ -3797,7 +3799,7 @@ MsgId History::maxMsgId() const {
 	for (const auto &block : ranges::views::reverse(blocks)) {
 		for (const auto &message : ranges::views::reverse(block->messages)) {
 			const auto item = message->data();
-			if (item->isRegular()) {
+			if (item->isRegular() && IsServerMsgId(item->id)) {
 				return item->id;
 			}
 		}

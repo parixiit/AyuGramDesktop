@@ -7,6 +7,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "window/window_main_menu.h"
 
+
 #include "apiwrap.h"
 #include "base/event_filter.h"
 #include "base/qt_signal_producer.h"
@@ -24,6 +25,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_folder.h"
 #include "data/data_group_call.h"
 #include "data/data_session.h"
+#include "data/data_thread.h"
+#include "data/data_peer.h"
 #include "data/data_stories.h"
 #include "data/data_user.h"
 #include "info/info_memento.h"
@@ -92,6 +95,27 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 namespace Window {
 namespace {
+
+class DrawerSeparator final : public Ui::RpWidget {
+public:
+	DrawerSeparator(QWidget *parent, int marginX = 16, int marginY = 4)
+	: RpWidget(parent)
+	, _marginX(marginX)
+	, _marginY(marginY) {
+		resize(width(), _marginY * 2 + 1);
+	}
+protected:
+	void paintEvent(QPaintEvent *e) override {
+		Painter p(this);
+		const auto color = Window::Theme::IsNightMode()
+			? QColor(255, 255, 255, 22)
+			: QColor(0, 0, 0, 20);
+		p.fillRect(QRect(_marginX, _marginY, width() - 2 * _marginX, 1), color);
+	}
+private:
+	int _marginX;
+	int _marginY;
+};
 
 constexpr auto kPlayStatusLimit = 12;
 
@@ -340,9 +364,9 @@ MainMenu::MainMenu(
 , _accounts(_inner->add(object_ptr<Ui::SlideWrap<Ui::VerticalLayout>>(
 	_inner.get(),
 	object_ptr<Ui::VerticalLayout>(_inner.get()))))
-, _shadow(_inner->add(object_ptr<Ui::SlideWrap<Ui::PlainShadow>>(
+, _shadow(_inner->add(object_ptr<Ui::SlideWrap<Ui::RpWidget>>(
 	_inner.get(),
-	object_ptr<Ui::PlainShadow>(_inner.get()))))
+	object_ptr<DrawerSeparator>(_inner.get(), 16, 4))))
 , _menu(_inner->add(
 	object_ptr<Ui::VerticalLayout>(_inner.get()),
 	{ 0, st::mainMenuSkip, 0, 0 }))
@@ -359,11 +383,18 @@ MainMenu::MainMenu(
 	setupArchive();
 	setupMenu();
 
-	const auto shadow = Ui::CreateChild<Ui::PlainShadow>(this);
+	const auto shadow = Ui::CreateChild<Ui::RpWidget>(this);
+	shadow->paintRequest() | rpl::on_next([=](QRect r) {
+		Painter p(shadow);
+		const auto color = Window::Theme::IsNightMode()
+			? QColor(255, 255, 255, 22)
+			: QColor(0, 0, 0, 20);
+		p.fillRect(r, color);
+	}, shadow->lifetime());
 	widthValue(
 	) | rpl::on_next([=](int width) {
 		const auto line = st::lineWidth;
-		shadow->setGeometry(0, st::mainMenuCoverHeight - line, width, line);
+		shadow->setGeometry(16, st::mainMenuCoverHeight - line, width - 32, line);
 	}, shadow->lifetime());
 
 	_nightThemeSwitch.setCallback([this] {
@@ -563,9 +594,7 @@ void MainMenu::setupArchive() {
 		tr::lng_archived_name(),
 		st::mainMenuButton,
 		{ &st::menuIconArchiveOpen });
-	inner->add(
-		object_ptr<Ui::PlainShadow>(inner),
-		{ 0, st::mainMenuSkip, 0, st::mainMenuSkip });
+	inner->add(object_ptr<DrawerSeparator>(inner, 16, 4));
 	button->setAcceptBoth(true);
 	button->clicks(
 	) | rpl::on_next([=](Qt::MouseButton which) {
@@ -722,9 +751,7 @@ void MainMenu::setupMenu() {
 		SetupMenuBots(_menu, controller);
 
 		if (settings.showMyProfileInDrawer() || settings.showBotsInDrawer())
-		_menu->add(
-			object_ptr<Ui::PlainShadow>(_menu),
-			{ 0, st::mainMenuSkip, 0, st::mainMenuSkip });
+		_menu->add(object_ptr<DrawerSeparator>(_menu, 16, 4));
 
 		if (settings.showNewGroupInDrawer())
 		AddMyChannelsBox(addAction(

@@ -261,6 +261,7 @@ void UnpinAllMessages(
 	not_null<Data::Thread*> thread);
 
 void AddSeparatorAndShiftUp(const PeerMenuCallback &addAction);
+void PeerMenuAddSeparator(const PeerMenuCallback &addAction, int paddingY = 4);
 
 [[nodiscard]] bool IsArchived(not_null<History*> history);
 [[nodiscard]] bool CanArchive(History *history, PeerData *peer);

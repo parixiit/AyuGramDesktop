@@ -91,6 +91,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include <QAction>
 
 // AyuGram includes
+#include "ayu/ayu_settings.h"
 #include "ayu/features/message_shot/message_shot.h"
 #include "window/themes/window_theme_preview.h"
 
@@ -414,9 +415,14 @@ void ColorsPalette::updateInnerGeometry() {
 	if (width < size * count) {
 		return;
 	}
-	const auto skip = (width - size * count) / float64(count - 1);
+	const auto maxSkip = 12.0;
+	const auto naturalSkip = (width - size * count) / float64(count - 1);
+	const auto skip = std::min(naturalSkip, maxSkip);
+	const auto totalWidth = count * size + (count - 1) * skip;
 	const auto y = st::defaultVerticalListSkip * 2;
-	auto x = float64(padding.left());
+	auto x = (width > totalWidth)
+		? padding.left() + (width - totalWidth) / 2.0
+		: float64(padding.left());
 	for (const auto &button : _buttons) {
 		button->moveToLeft(int(base::SafeRound(x)), y);
 		x += size + skip;
@@ -2606,7 +2612,7 @@ void SetupDefaultThemes(
 	}
 	block->resize(block->width(), buttons[0]->height());
 	block->widthValue(
-	) | rpl::on_next([buttons = std::move(buttons)](int width) {
+	) | rpl::on_next([block, buttons = std::move(buttons)](int width) {
 		Expects(!buttons.empty());
 
 		const auto padding = st::settingsButtonNoIcon.padding;
@@ -2625,13 +2631,18 @@ void SetupDefaultThemes(
 			return;
 		}
 		const auto fullSkips = width - count * single;
-		const auto skip = fullSkips / float64(skips);
-		auto left = padding.left() + 0.;
+		const auto maxSkip = AyuSettings::getInstance().modernLayout() ? 16.0 : 9999.0;
+		const auto skip = std::min(fullSkips / float64(skips), maxSkip);
+		const auto totalRowWidth = count * single + skips * skip;
+		auto left = (width > totalRowWidth)
+			? padding.left() + (width - totalRowWidth) / 2.
+			: padding.left() + 0.;
 		for (const auto button : buttons) {
 			button->resizeToWidth(single);
 			button->moveToLeft(int(base::SafeRound(left)), 0);
 			left += button->width() + skip;
 		}
+		block->resize(block->width(), buttons[0]->height());
 	}, block->lifetime());
 
 	if (AyuFeatures::MessageShot::isChoosingTheme()) {
@@ -2724,6 +2735,8 @@ void SetupCloudThemes(
 		HighlightRegistry *highlights) {
 	using namespace Window::Theme;
 	using namespace rpl::mappers;
+
+	controller->session().data().cloudThemes().refresh();
 
 	const auto wrap = container->add(
 		object_ptr<Ui::SlideWrap<Ui::VerticalLayout>>(

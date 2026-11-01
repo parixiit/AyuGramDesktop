@@ -135,3 +135,4 @@ public:
 	int messageId;
 	int entityCreateDate;
 };
+

@@ -17,6 +17,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/vertical_list.h"
 #include "ui/widgets/buttons.h"
 #include "ui/widgets/checkbox.h"
+#include "ui/painter.h"
 #include "ui/wrap/slide_wrap.h"
 #include "ui/wrap/vertical_layout.h"
 #include "window/window_session_controller.h"
@@ -320,7 +321,15 @@ Ui::SettingsButton *SectionBuilder::addSectionButton(SectionArgs &&args) {
 
 void SectionBuilder::addDivider() {
 	v::match(_context, [&](const WidgetContext &ctx) {
-		Ui::AddDivider(ctx.container);
+		const auto line = ctx.container->add(
+			object_ptr<Ui::RpWidget>(ctx.container));
+		line->resize(line->width(), 1);
+		line->paintRequest() | rpl::on_next([=](QRect clip) {
+			Painter p(line);
+			auto color = st::windowFg->c;
+			color.setAlphaF(0.08);
+			p.fillRect(QRect(16, 0, line->width() - 32, 1), color);
+		}, line->lifetime());
 	}, [](const SearchContext &) {
 	});
 }

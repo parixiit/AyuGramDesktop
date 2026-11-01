@@ -34,6 +34,10 @@ namespace SendMenu {
 struct Details;
 } // namespace SendMenu
 
+namespace Ayu {
+class TextSelectionFlyout;
+} // namespace Ayu
+
 namespace ChatHelpers {
 class TabbedPanel;
 class TabbedSelector;
@@ -601,6 +605,7 @@ private:
 	std::unique_ptr<ChatHelpers::TabbedPanel> _tabbedPanel;
 	std::unique_ptr<Ui::DropdownMenu> _attachBotsMenu;
 	std::unique_ptr<ChatHelpers::FieldAutocomplete> _autocomplete;
+	std::unique_ptr<Ayu::TextSelectionFlyout> _selectionFlyout;
 	std::unique_ptr<Ui::Emoji::SuggestionsController> _emojiSuggestions;
 
 	friend class FieldHeader;

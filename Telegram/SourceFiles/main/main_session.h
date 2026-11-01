@@ -84,6 +84,7 @@ namespace Ui {
 struct ColorIndicesCompressed;
 } // namespace Ui
 
+
 namespace Main {
 
 class Account;
@@ -255,6 +256,7 @@ public:
 	[[nodiscard]] MTP::DcId mainDcId() const;
 	[[nodiscard]] MTP::Instance &mtp() const;
 	[[nodiscard]] const MTP::ConfigFields &serverConfig() const;
+
 	[[nodiscard]] ApiWrap &api() {
 		return *_api;
 	}

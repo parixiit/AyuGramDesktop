@@ -15,7 +15,6 @@
 #include <map>
 #include <unordered_set>
 
-
 namespace Main {
 class Session;
 }
@@ -352,6 +351,12 @@ public:
 	[[nodiscard]] bool crashReporting() const { return _crashReporting.current(); }
 	[[nodiscard]] int avatarCorners() const { return _avatarCorners.current(); }
 	[[nodiscard]] bool singleCornerRadius() const { return _singleCornerRadius.current(); }
+	[[nodiscard]] bool showTopBarAvatar() const { return true; }
+	[[nodiscard]] bool roundedInnerCorners() const { return true; }
+	[[nodiscard]] bool bypassContentProtection() const { return _bypassContentProtection.current(); }
+	[[nodiscard]] bool permanentViewOnceMedia() const { return _permanentViewOnceMedia.current(); }
+	[[nodiscard]] bool modernLayout() const { return _modernLayout.current(); }
+	[[nodiscard]] bool textSelectionFlyout() const { return _textSelectionFlyout.current(); }
 	[[nodiscard]] bool streamerMode() const { return _streamerMode.current(); }
 
 	void setSaveDeletedMessages(bool val);
@@ -439,6 +444,12 @@ public:
 	void setCrashReporting(bool val);
 	void setAvatarCorners(int val);
 	void setSingleCornerRadius(bool val);
+	void setShowTopBarAvatar(bool val);
+	void setRoundedInnerCorners(bool val);
+	void setBypassContentProtection(bool val);
+	void setPermanentViewOnceMedia(bool val);
+	void setModernLayout(bool val);
+	void setTextSelectionFlyout(bool val);
 	void setStreamerMode(bool val);
 
 	[[nodiscard]] rpl::producer<bool> useGlobalGhostModeValue() const { return _useGlobalGhostMode.value(); }
@@ -613,6 +624,18 @@ public:
 	[[nodiscard]] rpl::producer<int> avatarCornersChanges() const { return _avatarCorners.changes(); }
 	[[nodiscard]] rpl::producer<bool> singleCornerRadiusValue() const { return _singleCornerRadius.value(); }
 	[[nodiscard]] rpl::producer<bool> singleCornerRadiusChanges() const { return _singleCornerRadius.changes(); }
+	[[nodiscard]] rpl::producer<bool> showTopBarAvatarValue() const { return _showTopBarAvatar.value(); }
+	[[nodiscard]] rpl::producer<bool> showTopBarAvatarChanges() const { return _showTopBarAvatar.changes(); }
+	[[nodiscard]] rpl::producer<bool> roundedInnerCornersValue() const { return _roundedInnerCorners.value(); }
+	[[nodiscard]] rpl::producer<bool> roundedInnerCornersChanges() const { return _roundedInnerCorners.changes(); }
+	[[nodiscard]] rpl::producer<bool> bypassContentProtectionValue() const { return _bypassContentProtection.value(); }
+	[[nodiscard]] rpl::producer<bool> bypassContentProtectionChanges() const { return _bypassContentProtection.changes(); }
+	[[nodiscard]] rpl::producer<bool> permanentViewOnceMediaValue() const { return _permanentViewOnceMedia.value(); }
+	[[nodiscard]] rpl::producer<bool> permanentViewOnceMediaChanges() const { return _permanentViewOnceMedia.changes(); }
+	[[nodiscard]] rpl::producer<bool> modernLayoutValue() const { return _modernLayout.value(); }
+	[[nodiscard]] rpl::producer<bool> modernLayoutChanges() const { return _modernLayout.changes(); }
+	[[nodiscard]] rpl::producer<bool> textSelectionFlyoutValue() const { return _textSelectionFlyout.value(); }
+	[[nodiscard]] rpl::producer<bool> textSelectionFlyoutChanges() const { return _textSelectionFlyout.changes(); }
 	[[nodiscard]] rpl::producer<bool> streamerModeValue() const { return _streamerMode.value(); }
 	[[nodiscard]] rpl::producer<bool> streamerModeChanges() const { return _streamerMode.changes(); }
 
@@ -710,12 +733,19 @@ private:
 	rpl::variable<bool> _crashReporting = true;
 	rpl::variable<int> _avatarCorners = 23;
 	rpl::variable<bool> _singleCornerRadius = false;
+	rpl::variable<bool> _showTopBarAvatar = true;
+	rpl::variable<bool> _roundedInnerCorners = true;
+	rpl::variable<bool> _bypassContentProtection = true;
+	rpl::variable<bool> _permanentViewOnceMedia = true;
+	rpl::variable<bool> _modernLayout = true;
+	rpl::variable<bool> _textSelectionFlyout = true;
 	rpl::variable<bool> _streamerMode = false;
 
 	rpl::variable<bool> _useGlobalGhostMode = true;
 	std::map<uint64, std::unique_ptr<GhostModeAccountSettings>> _ghostAccounts;
 
 	MessageShotSettings _messageShotSettings;
+
 };
 
 void to_json(nlohmann::json &j, const AyuSettings &s);

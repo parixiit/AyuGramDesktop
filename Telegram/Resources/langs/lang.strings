@@ -9191,3 +9191,13 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 "ayu_AboutText1" = "ToS breaking Telegram client based on {api_link}.";
 "ayu_UpdateAyuGram" = "Update AyuGram";
 "ayu_UtilityRestartRequired" = "The app will close in 5 seconds.";
+"ayu_ShowTopBarAvatar" = "Show Avatar in Chat Header";
+"ayu_RoundedInnerCorners" = "Rounded Inner Corners";
+"ayu_BypassContentProtection" = "Bypass Restricted Content";
+"ayu_BypassContentProtectionDescription" = "Allows copying text, forwarding, and saving media from protected channels and groups.";
+"ayu_PermanentViewOnceMedia" = "Permanent View-Once Media";
+"ayu_PermanentViewOnceMediaDescription" = "Prevents self-destructing and view-once media from auto-deleting, keeping them saved in chat.";
+"ayu_ModernLayout" = "Modern Layout";
+"ayu_ModernLayoutDescription" = "Display user info, groups, and channels across the main chat area.";
+"ayu_TextSelectionFlyout" = "Quick-Format Bar";
+"ayu_TextSelectionFlyoutDescription" = "Show a floating toolbar with formatting buttons when text is selected in the message input field.";

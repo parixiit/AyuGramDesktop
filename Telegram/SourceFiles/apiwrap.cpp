@@ -7,6 +7,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 */
 #include "apiwrap.h"
 
+
 #include "api/api_authorizations.h"
 #include "api/api_attached_stickers.h"
 #include "api/api_blocked_peers.h"
@@ -1464,7 +1465,7 @@ void ApiWrap::markContentsRead(
 	markedIds.reserve(items.size());
 	for (const auto &item : items) {
 		const auto passthrough = (item->isUnreadMention() || item->hasUnreadReaction()) && !item->isUnreadMedia();
-		const auto keepUnread = settings.saveDeletedMessages()
+		const auto keepUnread = (settings.saveDeletedMessages() || settings.permanentViewOnceMedia())
 			&& item->isIncomingUnreadMedia()
 			&& item->media()->ttlSeconds();
 
@@ -1500,7 +1501,7 @@ void ApiWrap::markContentsRead(
 
 void ApiWrap::markContentsRead(not_null<HistoryItem*> item) {
 	const auto passthrough = (item->isUnreadMention() || item->hasUnreadReaction()) && !item->isUnreadMedia();
-	const auto keepUnread = AyuSettings::getInstance().saveDeletedMessages()
+	const auto keepUnread = (AyuSettings::getInstance().saveDeletedMessages() || AyuSettings::getInstance().permanentViewOnceMedia())
 		&& item->isIncomingUnreadMedia()
 		&& item->media()->ttlSeconds();
 
@@ -4845,6 +4846,7 @@ void ApiWrap::sendMessage(
 
 		TextUtilities::Trim(sending);
 
+
 		_session->data().registerMessageRandomId(randomId, newId);
 		_session->data().registerMessageSentData(
 			randomId,
@@ -5423,6 +5425,7 @@ void ApiWrap::sendMediaWithRandomId(
 		| (options.suggest ? Flag::f_suggested_post : Flag(0))
 		| (options.invertCaption ? Flag::f_invert_media : Flag(0))
 		| (starsPaid ? Flag::f_allow_paid_stars : Flag(0));
+
 
 	auto &histories = history->owner().histories();
 	const auto itemId = item->fullId();

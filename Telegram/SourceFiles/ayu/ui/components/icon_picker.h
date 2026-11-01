@@ -24,6 +24,8 @@ protected:
 private:
 	void drawIcon(QPainter &p, const QImage &icon, int x, int y, float strokeOpacity);
 	[[nodiscard]] int cellWidth() const;
+	[[nodiscard]] int columnsCount() const;
+	[[nodiscard]] int rowsCount() const;
 
 	Ui::Animations::Simple _animation;
 	QString _wasSelected;

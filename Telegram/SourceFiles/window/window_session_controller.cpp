@@ -123,6 +123,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "settings/cloud_password/settings_cloud_password_start.h"
 #include "settings/cloud_password/settings_cloud_password_email_confirm.h"
 #include "settings/sections/settings_main.h"
+#include "settings/sections/settings_chat.h"
 #include "settings/sections/settings_premium.h"
 #include "settings/sections/settings_privacy_security.h"
 #include "styles/style_chat_helpers.h"
@@ -1485,6 +1486,9 @@ void SessionNavigation::showByInitialId(
 void SessionNavigation::showSettings(
 		Settings::Type type,
 		const SectionShow &params) {
+	if (AyuSettings::getInstance().modernLayout() && type == Settings::MainId()) {
+		type = Settings::ChatId();
+	}
 	showSection(
 		std::make_shared<Info::Memento>(
 			Info::Settings::Tag{ _session->user() },
@@ -3330,6 +3334,8 @@ void SessionController::setActiveChatsFilter(
 		closeFolder();
 		closeCommunity();
 	}
+	_window->hideSettingsAndLayer();
+	content()->closeSettingsSection();
 	if (adaptive().isOneColumn()) {
 		clearSectionStack(params);
 	}
@@ -4135,6 +4141,26 @@ void SessionController::checkHighlightControl(
 		const QString &id,
 		QWidget *widget) {
 	_window->checkHighlightControl(id, widget);
+}
+
+void SessionController::setSettingsSearchQuery(const QString &query) {
+	_settingsSearchQuery = query;
+}
+
+rpl::producer<QString> SessionController::settingsSearchQuery() const {
+	return _settingsSearchQuery.value();
+}
+
+QString SessionController::currentSettingsSearchQuery() const {
+	return _settingsSearchQuery.current();
+}
+
+rpl::event_stream<> &SessionController::settingsSearchSubmit() {
+	return _settingsSearchSubmit;
+}
+
+rpl::event_stream<int> &SessionController::settingsSearchKey() {
+	return _settingsSearchKey;
 }
 
 SessionController::~SessionController() {

@@ -1024,25 +1024,24 @@ void Instance::requestPermissionOrFail(Platform::PermissionType type, Fn<void()>
 std::shared_ptr<tgcalls::VideoCaptureInterface> Instance::getVideoCapture(
 		std::optional<QString> deviceId,
 		bool isScreenCapture) {
-	if (auto result = _videoCapture.lock()) {
+	if (_videoCapture) {
 		if (deviceId) {
-			result->switchToDevice(
+			_videoCapture->switchToDevice(
 				(deviceId->isEmpty()
 					? Core::App().settings().cameraDeviceId()
 					: *deviceId).toStdString(),
 				isScreenCapture);
 		}
-		return result;
+		return _videoCapture;
 	}
 	const auto startDeviceId = (deviceId && !deviceId->isEmpty())
 		? *deviceId
 		: Core::App().settings().cameraDeviceId();
-	auto result = std::shared_ptr<tgcalls::VideoCaptureInterface>(
+	_videoCapture = std::shared_ptr<tgcalls::VideoCaptureInterface>(
 		tgcalls::VideoCaptureInterface::Create(
 			tgcalls::StaticThreads::getThreads(),
 			startDeviceId.toStdString()));
-	_videoCapture = result;
-	return result;
+	return _videoCapture;
 }
 
 const ConferenceInvites &Instance::conferenceInvites(

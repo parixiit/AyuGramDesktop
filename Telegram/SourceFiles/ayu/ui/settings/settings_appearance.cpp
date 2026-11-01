@@ -210,6 +210,24 @@ void BuildAppearance(SectionBuilder &builder, AyuSectionBuilder &ayu) {
 		.getter = &AyuSettings::hidePremiumStatuses,
 		.setter = &AyuSettings::setHidePremiumStatuses,
 	});
+	ayu.addSettingToggle({
+		.id = u"ayu/modernLayout"_q,
+		.title = tr::ayu_ModernLayout(),
+		.getter = &AyuSettings::modernLayout,
+		.setter = &AyuSettings::setModernLayout,
+	});
+	builder.addSkip();
+	builder.addDividerText(tr::ayu_ModernLayoutDescription());
+	builder.addSkip();
+	ayu.addSettingToggle({
+		.id = u"ayu/textSelectionFlyout"_q,
+		.title = tr::ayu_TextSelectionFlyout(),
+		.getter = &AyuSettings::textSelectionFlyout,
+		.setter = &AyuSettings::setTextSelectionFlyout,
+	});
+	builder.addSkip();
+	builder.addDividerText(tr::ayu_TextSelectionFlyoutDescription());
+	builder.addSkip();
 
 	const auto controller = builder.controller();
 	builder.addButton({

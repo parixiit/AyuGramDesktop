@@ -9,6 +9,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 
 #include "ui/layers/box_content.h"
 #include "base/binary_guard.h"
+#include "settings/settings_type.h"
 
 struct LanguageId;
 
@@ -55,3 +56,7 @@ private:
 	Fn<Ui::ScrollToRequest(int rows)> _jump;
 
 };
+
+namespace Settings {
+[[nodiscard]] Type LanguageId();
+} // namespace Settings

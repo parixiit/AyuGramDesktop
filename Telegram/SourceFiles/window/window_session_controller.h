@@ -747,6 +747,12 @@ public:
 		Settings::HighlightArgs &&args);
 	void checkHighlightControl(const QString &id, QWidget *widget);
 
+	void setSettingsSearchQuery(const QString &query);
+	[[nodiscard]] rpl::producer<QString> settingsSearchQuery() const;
+	[[nodiscard]] QString currentSettingsSearchQuery() const;
+	[[nodiscard]] rpl::event_stream<> &settingsSearchSubmit();
+	[[nodiscard]] rpl::event_stream<int> &settingsSearchKey();
+
 	[[nodiscard]] rpl::lifetime &lifetime() {
 		return _lifetime;
 	}
@@ -905,6 +911,10 @@ private:
 
 	rpl::lifetime _starGiftAuctionLifetime;
 	rpl::lifetime _showCloudPasswordLifetime;
+
+	rpl::variable<QString> _settingsSearchQuery;
+	rpl::event_stream<> _settingsSearchSubmit;
+	rpl::event_stream<int> _settingsSearchKey;
 
 	rpl::lifetime _lifetime;
 

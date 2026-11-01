@@ -535,6 +535,7 @@ InnerWidget::InnerWidget(
 		refreshDialogRow({ update.item->history(), update.item->fullId() });
 	}, lifetime());
 
+
 	session().changes().entryUpdates(
 		Data::EntryUpdate::Flag::Repaint
 		| Data::EntryUpdate::Flag::Height

@@ -639,7 +639,7 @@ historyRevertItemAboutStyle: TextStyle(defaultTextStyle) {
 
 expandedMenuSeparator: MenuSeparator(defaultMenuSeparator) {
 	padding: margins(0px, 4px, 0px, 4px);
-	width: 6px;
+	width: 1px;
 }
 popupMenuExpandedSeparator: PopupMenu(popupMenuWithIcons) {
 	menu: Menu(menuWithIcons) {

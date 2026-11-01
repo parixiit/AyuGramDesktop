@@ -70,7 +70,7 @@ bool ChatsFiltersTabs::setSectionsAndCheckChanged(
 		return false;
 	}();
 	if (changed) {
-		Ui::DiscreteSlider::setSections(std::move(sections), context);
+		Ui::DiscreteSlider::setSections(std::move(sections), context, paused);
 		updateSectionsContentWidths();
 	}
 	_emojiPaused = std::move(paused);

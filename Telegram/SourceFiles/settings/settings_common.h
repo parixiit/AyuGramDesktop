@@ -353,4 +353,9 @@ struct SectionSearchRow {
 	const QStringList &terms,
 	const QStringList &words);
 
+void AddSeparator(
+	not_null<Ui::VerticalLayout*> container,
+	int marginX = 16,
+	int marginY = 8);
+
 } // namespace Settings

@@ -35,6 +35,8 @@ public:
 		Wrap wrap,
 		not_null<MoveMemento*> memento);
 
+	[[nodiscard]] WrapWidget *wrapWidget() const;
+
 	Dialogs::RowDescriptor activeChat() const override;
 
 	bool hasTopBarShadow() const override;

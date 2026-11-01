@@ -101,7 +101,7 @@ private:
 	not_null<Ui::VerticalLayout*> _inner;
 	not_null<Ui::RpWidget*> _topShadowSkip;
 	not_null<Ui::SlideWrap<Ui::VerticalLayout>*> _accounts;
-	not_null<Ui::SlideWrap<Ui::PlainShadow>*> _shadow;
+	not_null<Ui::SlideWrap<Ui::RpWidget>*> _shadow;
 	not_null<Ui::VerticalLayout*> _menu;
 	not_null<Ui::RpWidget*> _footer;
 	not_null<Ui::FlatLabel*> _telegram;
