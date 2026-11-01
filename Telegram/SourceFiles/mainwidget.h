@@ -151,6 +151,7 @@ public:
 	void orderWidgets();
 	QPixmap grabForShowAnimation(const Window::SectionSlideParams &params);
 	void checkMainSectionToLayer();
+	void closeSettingsSection();
 
 	[[nodiscard]] SendMenu::Details sendMenuDetails() const;
 	bool processChosenSticker(ChatHelpers::FileChosen &&chosen);

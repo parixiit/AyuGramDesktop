@@ -3332,6 +3332,7 @@ void SessionController::setActiveChatsFilter(
 		closeCommunity();
 	}
 	_window->hideSettingsAndLayer();
+	content()->closeSettingsSection();
 	if (adaptive().isOneColumn()) {
 		clearSectionStack(params);
 	}

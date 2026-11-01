@@ -2067,7 +2067,7 @@ void MainWidget::showNewSection(
 			return false;
 		} else if (isOneColumn()
 			|| (newThirdSection && _thirdSection)
-			|| (newMainSection && isMainSectionShown())) {
+			|| (newMainSection && (isMainSectionShown() || AyuSettings::getInstance().modernLayout()))) {
 			return true;
 		}
 		return false;
@@ -2160,6 +2160,18 @@ void MainWidget::checkMainSectionToLayer() {
 			anim::type::instant);
 	}
 	updateMainSectionShown();
+}
+
+void MainWidget::closeSettingsSection() {
+	const auto infoSection = dynamic_cast<Info::SectionWidget*>(_mainSection.data());
+	const auto wrap = infoSection ? infoSection->wrapWidget().get() : nullptr;
+	const auto isSettings = wrap
+		&& (wrap->controller()->section().type() == Info::Section::Type::Settings);
+	if (isSettings) {
+		_mainSection.destroy();
+		updateMainSectionShown();
+		updateControlsGeometry();
+	}
 }
 
 
